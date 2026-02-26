@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ResolveIT · Login </title>
+  <link rel="stylesheet" href="login.css">
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div class="login-container">
+    <!-- LEFT PANEL (branding) -->
+    <div class="left-panel">
+      <div class="left-noise"></div>
+      <button class="back-btn" id="backToHomeBtn">← Back</button>
+      <div class="left-content">
+        <div class="left-logo">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+          <span>ResolveIT</span>
+        </div>
+        <h2>Committee Member Portal</h2>
+        <p>All reports are handled with complete confidentiality. Your identity is always protected.</p>
+      </div>
+    </div>
+
+    <!-- RIGHT PANEL (forms) -->
+    <div class="right-panel">
+      <!-- DONE STATE (initially hidden) -->
+      <div class="done-state hidden" id="doneState">
+        <div class="done-emoji">✅</div>
+        <h2 id="doneTitle">Welcome back!</h2>
+        <p>You're now signed in to ResolveIT.</p>
+        <button class="btn-dark" id="goDashboardBtn">Go to Dashboard</button>
+      </div>
+
+      <!-- LOGIN/REGISTER FORM (visible by default) -->
+      <div class="form-state" id="formState">
+        <h1 id="formTitle">Committee Login</h1>
+        <p id="formSub">Welcome back!</p><br>
+
+        <!-- Sign In Form -->
+
+        <form id="authForm">
+          <div class="form-field">
+            <label>Email Address</label>
+            <input type="email" name="email" required placeholder="you@example.com" class="login-input" id="emailInput">
+          </div>
+
+          <div class="form-field">
+            <div class="password-header">
+              <label>Password</label>
+              <a href="#" id="forgotLink">Forgot password?</a>
+            </div>
+            <input type="password" name="password" required class="login-input" id="passwordInput">
+          </div>
+
+          <div class="error-message" id="errorMsg"></div>
+
+          <button type="submit" class="btn-dark submit-btn" id="submitBtn">Sign In</button>
+        </form>
+
+        <p class="secure-note">🔒 All data is end-to-end encrypted and handled with strict confidentiality.</p>
+      </div>
+    </div>
+  </div>
+
+  <script src="login.js"></script>
+</body>
+</html>

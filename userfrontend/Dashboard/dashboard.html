@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ResolveIT · User Dashboard</title>
+  <link rel="stylesheet" href="dashboard.css">
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <!-- Font Awesome for icons (optional but helpful) -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+  <div class="dashboard-container">
+    <!-- Sidebar Navigation -->
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-logo">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+        </svg>
+        <span>ResolveIT</span>
+      </div>
+      
+      <nav class="sidebar-nav">
+        <a href="#" class="nav-item active" data-page="dashboard">
+          <i class="fas fa-home"></i>
+          <span>Dashboard</span>
+        </a>
+        <a href="#" class="nav-item" data-page="grievance">
+          <i class="fas fa-edit"></i>
+          <span>Grievance Submission</span>
+        </a>
+        <a href="#" class="nav-item" data-page="track">
+          <i class="fas fa-search"></i>
+          <span>Track Complaint</span>
+        </a>
+        <a href="#" class="nav-item" data-page="feedback">
+          <i class="fas fa-comment"></i>
+          <span>Provide Feedback</span>
+        </a>
+        <a href="#" class="nav-item logout" id="logoutBtn">
+          <i class="fas fa-sign-out-alt"></i>
+          <span>Logout</span>
+        </a>
+      </nav>
+      
+      <div class="sidebar-footer">
+        <div class="user-info">
+          <div class="user-avatar">S</div>
+          <div class="user-details">
+            <span class="user-name">Priya</span>
+            <span class="user-role">User</span>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main Content Area -->
+    <main class="main-content" id="mainContent">
+      <!-- Dynamic content will be loaded here based on navigation -->
+    </main>
+  </div>
+
+  <!-- Mobile Menu Toggle (hidden on desktop) -->
+  <button class="mobile-menu-toggle" id="mobileMenuToggle">
+    <i class="fas fa-bars"></i>
+  </button>
+
+  <script src="dashboard.js"></script>
+</body>
+</html>

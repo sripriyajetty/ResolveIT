@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Committee Member Dashboard - Harassment Grievance System</title>
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <!-- Chart.js for analytics -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="dashboard.css">
+</head>
+<body>
+    <!-- Navigation Bar -->
+    <nav class="navbar">
+        <div class="logo">
+            <i class="fas fa-shield-alt"></i>
+            <span>Harassment Grievance System - Committee Member</span>
+        </div>
+        <div class="user-menu">
+            <div class="user-info">
+                <div class="user-avatar">
+                    <i class="fas fa-user-tie"></i>
+                </div>
+                <div>
+                    <div id="memberName">Priya</div>
+                    <small>Committee Member</small>
+                </div>
+            </div>
+            <div class="logout-btn" onclick="logout()">
+                <i class="fas fa-sign-out-alt"></i> Logout
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Container -->
+    <div class="container">
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <ul class="sidebar-menu">
+                <li class="active" onclick="switchTab('dashboard')">
+                    <i class="fas fa-home"></i>
+                    <span>Dashboard</span>
+                </li>
+                <li onclick="switchTab('assigned')">
+                    <i class="fas fa-tasks"></i>
+                    <span>My Assigned Grievances</span>
+                </li>
+                <li onclick="switchTab('escalated')">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <span>Escalated Cases</span>
+                </li>
+                <li onclick="switchTab('resolved')">
+                    <i class="fas fa-check-circle"></i>
+                    <span>Resolved Cases</span>
+                </li>
+                <li onclick="switchTab('analytics')">
+                    <i class="fas fa-chart-bar"></i>
+                    <span>Analytics</span>
+                </li>
+                <li onclick="switchTab('feedback')">
+                    <i class="fas fa-comment"></i>
+                    <span>Victim Feedback</span>
+                </li>
+            </ul>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content" id="mainContent">
+            <!-- Dynamic content will be loaded here -->
+        </div>
+    </div>
+
+    <!-- Grievance Detail Modal -->
+    <div class="modal" id="grievanceModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Grievance Details</h3>
+                <button class="close-btn" onclick="closeModal()">&times;</button>
+            </div>
+            <div id="grievanceDetails"></div>
+        </div>
+    </div>
+
+    <!-- Update Status Modal -->
+    <div class="modal" id="updateModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Update Grievance Status</h3>
+                <button class="close-btn" onclick="closeUpdateModal()">&times;</button>
+            </div>
+            <form id="updateForm" onsubmit="updateStatus(event)">
+                <input type="hidden" id="updateGrievanceId">
+                <div class="form-group">
+                    <label>Status</label>
+                    <select id="statusSelect" required>
+                        <option value="pending">Pending</option>
+                        <option value="under-review">Under Review</option>
+                        <option value="investigating">Investigating</option>
+                        <option value="action-taken">Action Taken</option>
+                        <option value="resolved">Resolved</option>
+                        <option value="closed">Closed</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Priority</label>
+                    <select id="prioritySelect" required>
+                        <option value="high">High</option>
+                        <option value="medium">Medium</option>
+                        <option value="low">Low</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Comments/Remarks</label>
+                    <textarea id="remarks" placeholder="Add your comments..."></textarea>
+                </div>
+                <button type="submit" class="submit-btn">Update Status</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Escalate Modal -->
+    <div class="modal" id="escalateModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Escalate Grievance</h3>
+                <button class="close-btn" onclick="closeEscalateModal()">&times;</button>
+            </div>
+            <form id="escalateForm" onsubmit="escalateGrievance(event)">
+                <input type="hidden" id="escalateGrievanceId">
+                <div class="form-group">
+                    <label>Reason for Escalation</label>
+                    <select id="escalationReason" required>
+                        <option value="requires-higher-authority">Requires Higher Authority</option>
+                        <option value="legal-intervention">Legal Intervention Needed</option>
+                        <option value="security-concern">Security Concern</option>
+                        <option value="time-sensitive">Time Sensitive</option>
+                        <option value="other">Other</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Escalate To</label>
+                    <select id="escalateTo" required>
+                        <option value="admin">Admin</option>
+                        <option value="hr-head">HR Head</option>
+                        <option value="legal-team">Legal Team</option>
+                        <option value="senior-committee">Senior Committee</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Detailed Explanation</label>
+                    <textarea id="escalationDetails" placeholder="Provide detailed reason for escalation..." required></textarea>
+                </div>
+                <button type="submit" class="submit-btn">Escalate Grievance</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Custom JS -->
+    <script src="dashboard.js"></script>
+</body>
+</html>

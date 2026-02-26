@@ -1,0 +1,300 @@
+/* === GLOBAL RESET & FONTS === */
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400&family=DM+Sans:wght@300;400;500;600&display=swap');
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: 'DM Sans', sans-serif;
+  background: #fff;
+  color: #1a1a1a;
+}
+
+/* === LOGIN CONTAINER (split view) === */
+.login-container {
+  min-height: 100vh;
+  display: flex;
+  font-family: 'DM Sans', sans-serif;
+}
+
+/* === LEFT PANEL (gradient background) === */
+.left-panel {
+  flex: 1;
+  background: linear-gradient(135deg, #4db6ac 0%, #3d9a94 40%, #c7786e 100%);
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  padding: 56px;
+  overflow: hidden;
+}
+
+.left-noise {
+  position: absolute;
+  inset: 0;
+  opacity: 0.12;
+  background-image: url('data:image/svg+xml,%3Csvg viewBox=\'0 0 256 256\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cfilter id=\'n\'%3E%3CfeTurbulence type=\'fractalNoise\' baseFrequency=\'0.85\' numOctaves=\'4\' stitchTiles=\'stitch\'/%3E%3C/filter%3E%3Crect width=\'100%25\' height=\'100%25\' filter=\'url(%23n)\'/%3E%3C/svg%3E');
+}
+
+.back-btn {
+  position: absolute;
+  top: 28px;
+  left: 32px;
+  background: rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  color: #fff;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-size: 13px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  backdrop-filter: blur(6px);
+  font-family: 'DM Sans', sans-serif;
+  border: none;
+  transition: background 0.2s;
+}
+.back-btn:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+.left-shield {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.left-content {
+  position: relative;
+  z-index: 1;
+  color: white;
+}
+
+.left-logo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 24px;
+  font-family: 'Playfair Display', serif;
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.left-content h2 {
+  font-family: 'Playfair Display', serif;
+  font-size: 36px;
+  font-weight: 900;
+  margin-bottom: 14px;
+  line-height: 1.2;
+  max-width: 400px;
+}
+
+.left-content p {
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.8);
+  line-height: 1.7;
+  max-width: 340px;
+  margin-bottom: 32px;
+}
+
+.left-badges {
+  display: flex;
+  gap: 20px;
+}
+
+.left-badges span {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.85);
+  font-weight: 500;
+}
+
+/* === RIGHT PANEL (forms) === */
+.right-panel {
+  width: 480px;
+  background: #fff;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 56px 52px;
+  position: relative;
+}
+
+/* Form elements */
+.form-field {
+  margin-bottom: 16px;
+}
+
+.form-field label {
+  display: block;
+  font-size: 13px;
+  font-weight: 500;
+  color: #374151;
+  margin-bottom: 6px;
+}
+
+.login-input {
+  width: 100%;
+  padding: 12px 14px;
+  border: 1.5px solid #e0e0e0;
+  border-radius: 10px;
+  font-size: 14px;
+  font-family: 'DM Sans', sans-serif;
+  color: #1a1a1a;
+  background: #fafafa;
+  transition: border 0.2s, box-shadow 0.2s;
+}
+
+.login-input:focus {
+  outline: none;
+  border-color: #1e1e1e !important;
+  box-shadow: 0 0 0 3px rgba(30, 30, 30, 0.08);
+}
+
+.password-header {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+
+.password-header a {
+  font-size: 13px;
+  color: #2a8a84;
+  text-decoration: none;
+}
+.password-header a:hover {
+  text-decoration: underline;
+}
+
+.tab-container {
+  display: flex;
+  background: #f5f5f5;
+  border-radius: 10px;
+  padding: 4px;
+  margin-bottom: 28px;
+  gap: 4px;
+}
+
+.tab-btn {
+  flex: 1;
+  padding: 9px;
+  border: none;
+  background: none;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  border-radius: 8px;
+  transition: all 0.2s;
+}
+
+.tab-btn.active {
+  background: #1e1e1e;
+  color: #fff;
+}
+
+.tab-btn:not(.active) {
+  color: #888;
+}
+
+.tab-btn:not(.active):hover {
+  background: #f5f5f5;
+  color: #1a1a1a;
+}
+
+.submit-btn {
+  width: 100%;
+  justify-content: center;
+  padding: 13px;
+  margin-top: 8px;
+  font-size: 15px;
+}
+
+.error-message {
+  color: #dc2626;
+  font-size: 13px;
+  text-align: center;
+  min-height: 20px;
+}
+
+.secure-note {
+  text-align: center;
+  font-size: 12px;
+  color: #bbb;
+  margin-top: 24px;
+  line-height: 1.6;
+}
+
+/* DONE STATE */
+.done-state {
+  text-align: center;
+}
+
+.done-emoji {
+  font-size: 56px;
+  margin-bottom: 20px;
+}
+
+.done-state h2 {
+  font-family: 'Playfair Display', serif;
+  font-size: 28px;
+  color: #1a1a1a;
+  margin-bottom: 12px;
+}
+
+.done-state p {
+  font-size: 14px;
+  color: #777;
+  margin-bottom: 28px;
+  line-height: 1.7;
+}
+
+/* Utility */
+.hidden {
+  display: none !important;
+}
+
+.btn-dark {
+  background: #1e1e1e;
+  color: #fff;
+  border: none;
+  padding: 13px 26px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-family: 'DM Sans', sans-serif;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.15s;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.btn-dark:hover {
+  background: #333;
+  transform: translateY(-1px);
+}
+
+/* responsive tweaks */
+@media (max-width: 900px) {
+  .login-container {
+    flex-direction: column;
+  }
+  .right-panel {
+    width: 100%;
+  }
+  .left-panel {
+    padding: 40px 24px;
+  }
+  .left-shield svg {
+    width: 200px;
+  }
+}
