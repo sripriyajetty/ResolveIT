@@ -160,6 +160,19 @@ body {
   box-shadow: 0 0 0 3px rgba(30, 30, 30, 0.08);
 }
 
+/* Field-level error text and invalid input state */
+.field-error {
+  color: #dc2626;
+  font-size: 12px;
+  margin-top: 6px;
+  min-height: 16px;
+}
+
+.login-input.invalid {
+  border-color: #dc2626 !important;
+  box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.06);
+}
+
 .password-header {
   display: flex;
   justify-content: space-between;

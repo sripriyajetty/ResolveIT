@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Monitor Escalations - Admin</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="monitor-escalations.css">
+</head>
+<body>
+    <div class="module-container">
+        <div class="module-header">
+            <h2><i class="fas fa-exclamation-triangle"></i> Monitor Escalations</h2>
+            <div class="escalation-stats">
+                <div class="stat-badge critical">
+                    <span class="stat-label">Critical</span>
+                    <span class="stat-value" id="criticalCount">0</span>
+                </div>
+                <div class="stat-badge high">
+                    <span class="stat-label">High Priority</span>
+                    <span class="stat-value" id="highCount">0</span>
+                </div>
+                <div class="stat-badge medium">
+                    <span class="stat-label">Medium</span>
+                    <span class="stat-value" id="mediumCount">0</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tabs -->
+        <div class="escalation-tabs">
+            <button class="tab-btn active" onclick="switchTab('pending')">Pending Review</button>
+            <button class="tab-btn" onclick="switchTab('in-progress')">In Progress</button>
+            <button class="tab-btn" onclick="switchTab('resolved')">Resolved</button>
+            <button class="tab-btn" onclick="switchTab('all')">All Escalations</button>
+        </div>
+
+        <!-- Filters -->
+        <div class="filter-bar">
+            <div class="filter-group">
+                <label>Time Period:</label>
+                <select onchange="filterByTime()" id="timeFilter">
+                    <option value="today">Today</option>
+                    <option value="week" selected>This Week</option>
+                    <option value="month">This Month</option>
+                    <option value="all">All Time</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label>Escalation Reason:</label>
+                <select onchange="filterByReason()" id="reasonFilter">
+                    <option value="all">All Reasons</option>
+                    <option value="legal">Legal Intervention</option>
+                    <option value="authority">Higher Authority</option>
+                    <option value="security">Security Concern</option>
+                    <option value="time">Time Sensitive</option>
+                </select>
+            </div>
+            <div class="search-box">
+                <i class="fas fa-search"></i>
+                <input type="text" placeholder="Search escalations..." onkeyup="searchEscalations()">
+            </div>
+        </div>
+
+        <!-- Escalations List -->
+        <div class="escalations-container" id="escalationsContainer">
+            <!-- Escalations will be loaded here -->
+        </div>
+
+        <!-- Action Modal -->
+        <div class="modal" id="actionModal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3><i class="fas fa-tasks"></i> Take Action</h3>
+                    <button class="close-btn" onclick="closeModal('actionModal')">&times;</button>
+                </div>
+                <div id="actionDetails"></div>
+                <form onsubmit="takeAction(event)">
+                    <input type="hidden" id="actionEscalationId">
+                    <div class="form-group">
+                        <label>Action Type</label>
+                        <select id="actionType" required onchange="toggleActionFields()">
+                            <option value="">Select Action</option>
+                            <option value="approve">Approve Escalation</option>
+                            <option value="reassign">Reassign to Different Committee</option>
+                            <option value="involve-legal">Involve Legal Team</option>
+                            <option value="schedule-meeting">Schedule Emergency Meeting</option>
+                            <option value="close">Close Escalation</option>
+                        </select>
+                    </div>
+                    <div class="form-group" id="reassignField" style="display: none;">
+                        <label>Reassign To</label>
+                        <select id="reassignTo">
+                            <option value="">Select Committee Member</option>
+                        </select>
+                    </div>
+                    <div class="form-group" id="meetingField" style="display: none;">
+                        <label>Meeting Date & Time</label>
+                        <input type="datetime-local" id="meetingDateTime">
+                    </div>
+                    <div class="form-group">
+                        <label>Comments/Instructions</label>
+                        <textarea id="actionComments" rows="3" placeholder="Add your comments..."></textarea>
+                    </div>
+                    <button type="submit" class="submit-btn">Submit Action</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script src="monitor-escalations.js"></script>
+</body>
+</html>

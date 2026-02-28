@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>View Reports - Admin</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="view-reports.css">
+</head>
+<body>
+    <div class="module-container">
+        <div class="module-header">
+            <h2><i class="fas fa-chart-bar"></i> Reports & Analytics</h2>
+            <div class="report-actions">
+                <button class="btn-primary" onclick="exportReport('pdf')">
+                    <i class="fas fa-file-pdf"></i> Export PDF
+                </button>
+                <button class="btn-secondary" onclick="exportReport('excel')">
+                    <i class="fas fa-file-excel"></i> Export Excel
+                </button>
+            </div>
+        </div>
+
+        <!-- Date Range Selector -->
+        <div class="date-range">
+            <div class="range-presets">
+                <button class="range-btn active" onclick="setDateRange('week')">This Week</button>
+                <button class="range-btn" onclick="setDateRange('month')">This Month</button>
+                <button class="range-btn" onclick="setDateRange('quarter')">This Quarter</button>
+                <button class="range-btn" onclick="setDateRange('year')">This Year</button>
+                <button class="range-btn" onclick="setDateRange('custom')">Custom</button>
+            </div>
+            <div class="custom-range" id="customRange" style="display: none;">
+                <input type="date" id="startDate"> to <input type="date" id="endDate">
+                <button onclick="applyCustomRange()">Apply</button>
+            </div>
+        </div>
+
+        <!-- Summary Cards -->
+        <div class="summary-cards">
+            <div class="summary-card">
+                <div class="card-icon">
+                    <i class="fas fa-file-alt"></i>
+                </div>
+                <div class="card-info">
+                    <h3>Total Grievances</h3>
+                    <div class="card-value" id="totalGrievances">0</div>
+                    <div class="card-trend positive">+12% from last period</div>
+                </div>
+            </div>
+            <div class="summary-card">
+                <div class="card-icon">
+                    <i class="fas fa-check-circle"></i>
+                </div>
+                <div class="card-info">
+                    <h3>Resolved</h3>
+                    <div class="card-value" id="resolvedCount">0</div>
+                    <div class="card-trend positive">+8% from last period</div>
+                </div>
+            </div>
+            <div class="summary-card">
+                <div class="card-icon">
+                    <i class="fas fa-clock"></i>
+                </div>
+                <div class="card-info">
+                    <h3>Avg Resolution Time</h3>
+                    <div class="card-value" id="avgTime">0</div>
+                    <div class="card-trend negative">+2 days</div>
+                </div>
+            </div>
+            <div class="summary-card">
+                <div class="card-icon">
+                    <i class="fas fa-star"></i>
+                </div>
+                <div class="card-info">
+                    <h3>Satisfaction Rate</h3>
+                    <div class="card-value" id="satisfactionRate">0%</div>
+                    <div class="card-trend positive">+5% from last period</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Charts Row -->
+        <div class="charts-row">
+            <div class="chart-container">
+                <h3>Grievances by Type</h3>
+                <canvas id="typeChart"></canvas>
+            </div>
+            <div class="chart-container">
+                <h3>Grievances by Priority</h3>
+                <canvas id="priorityChart"></canvas>
+            </div>
+        </div>
+
+        <div class="charts-row">
+            <div class="chart-container">
+                <h3>Monthly Trend</h3>
+                <canvas id="trendChart"></canvas>
+            </div>
+            <div class="chart-container">
+                <h3>Resolution Time by Type</h3>
+                <canvas id="resolutionChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Detailed Reports Section -->
+        <div class="reports-section">
+            <h3>Detailed Reports</h3>
+            
+            <div class="report-tabs">
+                <button class="report-tab active" onclick="showReport('grievance')">Grievance Report</button>
+                <button class="report-tab" onclick="showReport('committee')">Committee Performance</button>
+                <button class="report-tab" onclick="showReport('feedback')">Feedback Analysis</button>
+                <button class="report-tab" onclick="showReport('escalation')">Escalation Report</button>
+            </div>
+
+            <div class="report-content" id="grievanceReport">
+                <table class="report-table">
+                    <thead>
+                        <tr>
+                            <th>Month</th>
+                            <th>New Cases</th>
+                            <th>Resolved</th>
+                            <th>Pending</th>
+                            <th>Escalated</th>
+                            <th>Resolution Rate</th>
+                        </tr>
+                    </thead>
+                    <tbody id="grievanceTableBody">
+                        <!-- Data loaded via JS -->
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="report-content" id="committeeReport" style="display: none;">
+                <table class="report-table">
+                    <thead>
+                        <tr>
+                            <th>Committee Member</th>
+                            <th>Assigned</th>
+                            <th>Resolved</th>
+                            <th>Avg Time</th>
+                            <th>Satisfaction</th>
+                            <th>Performance</th>
+                        </tr>
+                    </thead>
+                    <tbody id="committeeTableBody">
+                        <!-- Data loaded via JS -->
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="report-content" id="feedbackReport" style="display: none;">
+                <!-- Feedback analysis content -->
+            </div>
+
+            <div class="report-content" id="escalationReport" style="display: none;">
+                <!-- Escalation report content -->
+            </div>
+        </div>
+    </div>
+
+    <script src="view-reports.js"></script>
+</body>
+</html>

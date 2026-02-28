@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Assign Committee - Admin</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="assign-committee.css">
+</head>
+<body>
+    <div class="module-container">
+        <div class="module-header">
+            <h2><i class="fas fa-user-tie"></i> Assign Committee Members to Grievances</h2>
+            <div class="header-actions">
+                <button class="btn-primary" onclick="showAutoAssignModal()">
+                    <i class="fas fa-magic"></i> Auto Assign
+                </button>
+            </div>
+        </div>
+
+        <!-- Filter Section -->
+        <div class="filter-section">
+            <div class="filter-group">
+                <label>Filter by Priority:</label>
+                <select id="priorityFilter" onchange="filterGrievances()">
+                    <option value="all">All Priorities</option>
+                    <option value="high">High Priority</option>
+                    <option value="medium">Medium Priority</option>
+                    <option value="low">Low Priority</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label>Filter by Type:</label>
+                <select id="typeFilter" onchange="filterGrievances()">
+                    <option value="all">All Types</option>
+                    <option value="Verbal">Verbal Harassment</option>
+                    <option value="Physical">Physical Harassment</option>
+                    <option value="Cyber">Cyber Harassment</option>
+                    <option value="Discrimination">Discrimination</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label>Search:</label>
+                <input type="text" id="searchInput" placeholder="Search grievances..." onkeyup="filterGrievances()">
+            </div>
+        </div>
+
+        <!-- Statistics Cards -->
+        <div class="stats-container">
+            <div class="stat-card">
+                <div class="stat-info">
+                    <h3>Unassigned Grievances</h3>
+                    <div class="stat-number" id="unassignedCount">0</div>
+                </div>
+                <div class="stat-icon">
+                    <i class="fas fa-exclamation-circle"></i>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-info">
+                    <h3>Available Committee</h3>
+                    <div class="stat-number" id="availableCommitteeCount">0</div>
+                </div>
+                <div class="stat-icon">
+                    <i class="fas fa-users"></i>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-info">
+                    <h3>Avg Assignment Time</h3>
+                    <div class="stat-number" id="avgAssignmentTime">2.5h</div>
+                </div>
+                <div class="stat-icon">
+                    <i class="fas fa-clock"></i>
+                </div>
+            </div>
+        </div>
+
+        <!-- Grievances Table -->
+        <div class="table-container">
+            <h3>Pending Grievances for Assignment</h3>
+            <table id="grievancesTable">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Victim</th>
+                        <th>Type</th>
+                        <th>Priority</th>
+                        <th>Date</th>
+                        <th>Status</th>
+                        <th>Assigned To</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="grievancesTableBody">
+                    <!-- Data will be loaded here -->
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Committee Members Section -->
+        <div class="committee-section">
+            <h3><i class="fas fa-users"></i> Committee Members</h3>
+            <div class="committee-grid" id="committeeGrid">
+                <!-- Committee members will be loaded here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Assign Committee Modal -->
+    <div class="modal" id="assignModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3><i class="fas fa-user-plus"></i> Assign Committee Member</h3>
+                <button class="close-btn" onclick="closeModal('assignModal')">&times;</button>
+            </div>
+            <div class="grievance-info" id="grievanceInfo"></div>
+            <form id="assignForm" onsubmit="assignCommittee(event)">
+                <input type="hidden" id="assignGrievanceId">
+                <div class="form-group">
+                    <label>Select Committee Member</label>
+                    <select id="committeeSelect" required>
+                        <option value="">Choose a member...</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Assignment Notes</label>
+                    <textarea id="assignmentNotes" placeholder="Add any special instructions..."></textarea>
+                </div>
+                <div class="form-group">
+                    <label>Priority Level</label>
+                    <select id="assignmentPriority">
+                        <option value="high">High</option>
+                        <option value="medium" selected>Medium</option>
+                        <option value="low">Low</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Deadline</label>
+                    <input type="date" id="assignmentDeadline" min="">
+                </div>
+                <button type="submit" class="submit-btn">Assign Grievance</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Auto Assign Modal -->
+    <div class="modal" id="autoAssignModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3><i class="fas fa-magic"></i> Auto Assign Grievances</h3>
+                <button class="close-btn" onclick="closeModal('autoAssignModal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p>Auto-assign will distribute unassigned grievances based on:</p>
+                <ul style="margin: 15px 0; padding-left: 20px; color: #666;">
+                    <li>Committee member's current workload</li>
+                    <li>Expertise area</li>
+                    <li>Priority of the grievance</li>
+                </ul>
+                <div class="form-group">
+                    <label>Assignment Strategy</label>
+                    <select id="autoAssignStrategy">
+                        <option value="balanced">Balanced (Equal distribution)</option>
+                        <option value="expertise">Expertise-based</option>
+                        <option value="priority">Priority-based</option>
+                    </select>
+                </div>
+                <button class="submit-btn" onclick="autoAssignGrievances()">Proceed with Auto-Assign</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="toast"></div>
+
+    <script src="assign-committee.js"></script>
+</body>
+</html>
