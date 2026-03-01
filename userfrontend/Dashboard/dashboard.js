@@ -454,7 +454,7 @@ document.addEventListener('DOMContentLoaded', function() {
     logoutBtn.addEventListener('click', (e) => {
       e.preventDefault();
       if (confirm('Are you sure you want to logout?')) {
-        window.location.href = '../Login/login.html';
+        window.location.href = '../Home/home.html'; 
       }
     });
   }

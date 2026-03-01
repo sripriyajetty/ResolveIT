@@ -114,7 +114,7 @@ document.addEventListener('DOMContentLoaded', function () {
       submitBtn.disabled = false;
     }, 1000);
   });
-
+  
   // --- Go to Dashboard (back home) ---
   goDashboard.addEventListener('click', () => {
     window.location.href = '../Dashboard/dashboard.html';

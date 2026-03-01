@@ -1,13 +1,17 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Resolve IT · Choose Role</title>
   <link rel="stylesheet" href="index.css">
   <!-- Google Fonts -->
-  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link
+    href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400&family=DM+Sans:wght@300;400;500;600&display=swap"
+    rel="stylesheet">
 </head>
+
 <body>
   <div class="role-container">
     <!-- Background decoration (same aesthetic as original) -->
@@ -16,8 +20,10 @@
       <div class="role-bg-noise"></div>
       <div class="role-bg-shield">
         <svg viewBox="0 0 200 230" width="400" opacity="0.1">
-          <path d="M100 10 L185 45 L185 110 C185 158 148 198 100 218 C52 198 15 158 15 110 L15 45 Z" fill="none" stroke="currentColor" stroke-width="2"/>
-          <path d="M100 25 L170 55 L170 112 C170 152 138 186 100 204 C62 186 30 152 30 112 L30 55 Z" fill="none" stroke="currentColor" stroke-width="1.5"/>
+          <path d="M100 10 L185 45 L185 110 C185 158 148 198 100 218 C52 198 15 158 15 110 L15 45 Z" fill="none"
+            stroke="currentColor" stroke-width="2" />
+          <path d="M100 25 L170 55 L170 112 C170 152 138 186 100 204 C62 186 30 152 30 112 L30 55 Z" fill="none"
+            stroke="currentColor" stroke-width="1.5" />
         </svg>
       </div>
     </div>
@@ -26,8 +32,9 @@
     <div class="role-content">
       <!-- Logo -->
       <div class="role-logo">
-        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+          stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
         </svg>
         <span>Resolve IT</span>
       </div>
@@ -39,50 +46,63 @@
       <!-- Role cards -->
       <div class="role-cards">
         <!-- User Card -->
+        <!-- User Card -->
         <div class="role-card" id="userCard" data-role="user">
-          <div class="card-icon">👤</div>
-          <h2 class="card-title">User</h2>
-          <p class="card-desc">File and manage reports, access support resources, track incident status</p>
+          <div class="card-icon">👩‍💻</div>
+          <h2 class="card-title">User (Victim)</h2>
+          <p class="card-desc">
+            Submit grievances securely, upload evidence, and track complaint progress through your dashboard.
+          </p>
           <div class="card-features">
-            <span>🔒 Anonymous reporting</span>
-            <span>📱 24/7 support access</span>
-            <span>🔔 Real-time updates</span>
+            <span>🕵️ Optional anonymous reporting</span>
+            <span>📂 Secure evidence upload</span>
+            <span>🔔 Real-time status tracking</span>
           </div>
-          <button class="btn-primary" id="userBtn">Continue as User →</button>
+          <button class="btn-primary" id="userBtn">
+            Continue as User →
+          </button>
         </div>
 
         <!-- Committee Member Card -->
         <div class="role-card" id="committeeCard" data-role="committee">
           <div class="card-icon">⚖️</div>
           <h2 class="card-title">Committee Member</h2>
-          <p class="card-desc">Review reports, coordinate with advocates, manage case workflows</p>
+          <p class="card-desc">
+            Review assigned grievances, update case status, and escalate unresolved complaints.
+          </p>
           <div class="card-features">
-            <span>📋 Case management</span>
-            <span>🤝 Advocate coordination</span>
-            <span>📊 Review dashboard</span>
+            <span>📋 Case review dashboard</span>
+            <span>📝 Status updates</span>
+            <span>⬆️ Escalation management</span>
           </div>
-          <button class="btn-outline" id="committeeBtn">Continue as Committee →</button>
+          <button class="btn-outline" id="committeeBtn">
+            Continue as Committee →
+          </button>
         </div>
 
         <!-- Admin Card -->
         <div class="role-card" id="adminCard" data-role="admin">
-          <div class="card-icon">⚙️</div>
+          <div class="card-icon">🛠️</div>
           <h2 class="card-title">Administrator</h2>
-          <p class="card-desc">System configuration, user management, audit logs and analytics</p>
+          <p class="card-desc">
+            Manage users, assign committee members, monitor escalations, and maintain system accountability.
+          </p>
           <div class="card-features">
-            <span>🔧 System settings</span>
-            <span>👥 User management</span>
-            <span>📈 Analytics</span>
+            <span>👥 User & role management</span>
+            <span>📊 Escalation monitoring</span>
+            <span>📜 Audit logs & reports</span>
           </div>
-          <button class="btn-outline" id="adminBtn">Continue as Admin →</button>
+          <button class="btn-outline" id="adminBtn">
+            Continue as Admin →
+          </button>
         </div>
       </div>
-
-      <!-- Footer note -->
-      <p class="role-footer">🔒 All roles require authentication. Your access is securely managed.</p>
+        <!-- Footer note -->
+        <p class="role-footer">🔒 All roles require authentication. Your access is securely managed.</p>
+      </div>
     </div>
-  </div>
 
-  <script src="index.js"></script>
+    <script src="index.js"></script>
 </body>
+
 </html>

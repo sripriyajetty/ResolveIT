@@ -1,5 +1,4 @@
 // login.js – handles tab switching, form validation, done state, and navigation back to home
-
 document.addEventListener('DOMContentLoaded', function () {
   // --- DOM elements ---
   const backBtn = document.getElementById('backToHomeBtn');

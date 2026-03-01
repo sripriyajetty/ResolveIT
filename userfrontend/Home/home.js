@@ -26,13 +26,37 @@ document.addEventListener('DOMContentLoaded', function () {
   const featuresGrid = document.querySelector('.features-grid');
   if (featuresGrid) {
     const features = [
-      { icon: '🔒', title: 'End-to-End Encryption', desc: 'Your reports are encrypted from the moment you submit. No one can access your data without authorization.' },
-      { icon: '👁️', title: 'Anonymous Reporting', desc: 'Choose to report anonymously. Your identity stays protected throughout the entire process.' },
-      { icon: '⚖️', title: 'Legal Protection', desc: 'Access legal resources and connect with verified advocates who can guide you through your options.' },
-      { icon: '🔔', title: 'Real-Time Updates', desc: 'Track the status of your report with instant notifications at every stage.' },
-      { icon: '🤝', title: 'Community Support', desc: 'Connect with support groups and a community of survivors to share your journey.' },
-      { icon: '📄', title: 'Evidence Management', desc: 'Securely upload and store evidence. All files are encrypted and timestamped for legal validity.' }
-    ];
+  {
+    icon: '🛡️',
+    title: 'Confidential & Secure Complaints',
+    desc: 'Submit grievances in a protected environment. Only authorized committee members can access case details, ensuring privacy and dignity.'
+  },
+  {
+    icon: '🕵️',
+    title: 'Anonymous Reporting Option',
+    desc: 'Report incidents anonymously if you choose. Your identity remains hidden while your complaint is still reviewed seriously.'
+  },
+  {
+    icon: '📊',
+    title: 'Transparent Case Tracking',
+    desc: 'Monitor the status of your grievance in real-time — from submission to resolution — with clear progress updates.'
+  },
+  {
+    icon: '⚖️',
+    title: 'Structured Review & Escalation',
+    desc: 'Committee members analyze cases, update statuses, and escalate unresolved issues to ensure timely action.'
+  },
+  {
+    icon: '👩‍💼',
+    title: 'Administrative Oversight',
+    desc: 'Admins manage users, assign committee members, monitor escalations, and maintain accountability through audit logs.'
+  },
+  {
+    icon: '📂',
+    title: 'Secure Evidence Upload',
+    desc: 'Upload documents, screenshots, or media securely. All evidence is stored safely and linked to your grievance for review.'
+  }
+];
     featuresGrid.innerHTML = features.map(f => `
       <div class="feat-card">
         <div class="feat-icon"><span>${f.icon}</span></div>
@@ -46,9 +70,9 @@ document.addEventListener('DOMContentLoaded', function () {
   const stepsContainer = document.getElementById('stepsContainer');
   if (stepsContainer) {
     const steps = [
-      ['01', 'Submit Your Report', 'Fill out a secure form with details of the incident. You can choose to remain anonymous.'],
-      ['02', 'Verification & Review', 'Our trained team reviews your report while maintaining strict confidentiality protocols.'],
-      ['03', 'Action & Support', 'Appropriate action is taken and you receive support resources tailored to your situation.']
+    ['01','Register & Submit Grievance','Login or register securely, fill in incident details, and upload supporting evidence. You may choose to report anonymously.'],
+    ['02','Committee Review','Assigned committee members analyze the grievance, update its status, and communicate progress through the dashboard.'],
+    ['03','Resolution or Escalation','The case is resolved with appropriate action or escalated to higher authorities if required. Admin monitors the entire process for accountability.']
     ];
     let stepsHtml = '';
     steps.forEach((step, index) => {
@@ -70,9 +94,9 @@ document.addEventListener('DOMContentLoaded', function () {
   const impactGrid = document.getElementById('impactGrid');
   if (impactGrid) {
     const impactData = [
-      ['1 in 3', 'women experience harassment in the workplace'],
-      ['70%', 'of incidents go unreported due to fear'],
-      ['85%', 'of survivors say they lacked a safe channel']
+      ['1 in 3', 'women report experiencing harassment in professional or academic spaces'],
+  ['Up to 70%', 'of incidents remain unreported due to fear of retaliation or lack of trust in systems'],
+  ['Safe Reporting', 'increases accountability and improves institutional response times']
     ];
     impactGrid.innerHTML = impactData.map(([val, label]) => `
       <div class="impact-card">
