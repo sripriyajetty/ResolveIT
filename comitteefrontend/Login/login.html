@@ -27,23 +27,46 @@
         </div>
         <h2>Committee Member Portal</h2>
         <p>All reports are handled with complete confidentiality. Your identity is always protected.</p>
-
-        <div class="committee-rules">
-          <h3>Committee Member Guidelines</h3>
-          <ul>
-            <li>🔐 Maintain strict confidentiality of all grievance data.</li>
-            <li>📋 Review complaints objectively without personal bias.</li>
-            <li>⏱ Update grievance status within 48 hours of assignment.</li>
-            <li>⚖ Escalate unresolved or critical cases promptly.</li>
-            <li>📝 Document every action taken for audit purposes.</li>
-            <li>🚫 Do not disclose victim identity under any circumstance.</li>
-          </ul>
-        </div>
       </div>
     </div>
 
     <!-- RIGHT PANEL (forms) -->
     <div class="right-panel">
+      <!-- GUIDELINES MODAL (initially hidden) -->
+      <div class="modal hidden" id="guidelinesModal">
+        <div class="modal-content">
+          <button class="modal-close" id="closeGuidelinesBtn">×</button>
+          <h2>Committee Member Guidelines</h2>
+          <div class="guidelines-list">
+            <div class="guideline-item">
+              <span class="guideline-icon">🔐</span>
+              <p>Maintain strict confidentiality of all grievance data.</p>
+            </div>
+            <div class="guideline-item">
+              <span class="guideline-icon">📋</span>
+              <p>Review complaints objectively without personal bias.</p>
+            </div>
+            <div class="guideline-item">
+              <span class="guideline-icon">⏱</span>
+              <p>Update grievance status within 48 hours of assignment.</p>
+            </div>
+            <div class="guideline-item">
+              <span class="guideline-icon">⚖</span>
+              <p>Escalate unresolved or critical cases promptly.</p>
+            </div>
+            <div class="guideline-item">
+              <span class="guideline-icon">📝</span>
+              <p>Document every action taken for audit purposes.</p>
+            </div>
+            <div class="guideline-item">
+              <span class="guideline-icon">🚫</span>
+              <p>Do not disclose victim identity under any circumstance.</p>
+            </div>
+          </div>
+          <button class="btn-dark" id="acknowledgeGuidelinesBtn">I Understand</button>
+        </div>
+      </div>
+
       <!-- DONE STATE (initially hidden) -->
       <div class="done-state hidden" id="doneState">
         <div class="done-emoji">✅</div>
@@ -70,7 +93,10 @@
               <label>Password</label>
               <a href="#" id="forgotLink">Forgot password?</a>
             </div>
-            <input type="password" name="password" required class="login-input" id="passwordInput">
+            <div class="password-input-wrapper">
+              <input type="password" name="password" required class="login-input" id="passwordInput">
+              <button type="button" class="show-password-btn" id="showPasswordBtn" title="Show password">👁️</button>
+            </div>
           </div>
 
           <div class="error-message" id="errorMsg"></div>

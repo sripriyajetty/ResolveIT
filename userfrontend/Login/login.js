@@ -29,6 +29,11 @@ document.addEventListener('DOMContentLoaded', function () {
   const passwordError = document.getElementById('passwordError');
   const confirmError = document.getElementById('confirmError');
 
+  // show password buttons
+  const showPasswordBtn = document.getElementById('showPasswordBtn');
+  const showConfirmPasswordBtn = document.getElementById('showConfirmPasswordBtn');
+  const passwordRequirements = document.getElementById('passwordRequirements');
+
   // --- Helper to switch UI mode ---
   function setMode(mode) {
     if (mode === 'login') {
@@ -41,6 +46,7 @@ document.addEventListener('DOMContentLoaded', function () {
       submitBtn.innerText = 'Sign In';
       // optional: clear confirm field
       confirmInput.value = '';
+      passwordRequirements.classList.add('hidden');
     } else {
       tabRegister.classList.add('active');
       tabLogin.classList.remove('active');
@@ -49,6 +55,7 @@ document.addEventListener('DOMContentLoaded', function () {
       formTitle.innerText = 'Create account';
       formSub.innerText = 'Join ResolveIT to file your report';
       submitBtn.innerText = 'Create Account';
+      passwordRequirements.classList.remove('hidden');
     }
     errorMsg.innerText = ''; // clear global errors
     // clear per-field errors and invalid state
@@ -60,6 +67,21 @@ document.addEventListener('DOMContentLoaded', function () {
   tabLogin.addEventListener('click', () => setMode('login'));
   tabRegister.addEventListener('click', () => setMode('register'));
 
+  // --- Show/Hide Password Toggles ---
+  showPasswordBtn.addEventListener('click', (e) => {
+    e.preventDefault();
+    const isPassword = passwordInput.type === 'password';
+    passwordInput.type = isPassword ? 'text' : 'password';
+    showPasswordBtn.innerText = isPassword ? '👁️‍🗨️' : '👁️';
+  });
+
+  showConfirmPasswordBtn.addEventListener('click', (e) => {
+    e.preventDefault();
+    const isPassword = confirmInput.type === 'password';
+    confirmInput.type = isPassword ? 'text' : 'password';
+    showConfirmPasswordBtn.innerText = isPassword ? '👁️‍🗨️' : '👁️';
+  });
+
   // --- Back to home (home.html) ---
   backBtn.addEventListener('click', () => {
     window.location.href = '../Home/home.html';
@@ -68,19 +90,14 @@ document.addEventListener('DOMContentLoaded', function () {
   // --- Forgot password link (no-op) ---
   forgotLink.addEventListener('click', (e) => {
     e.preventDefault();
-    // could show a toast, but we just prevent default
   });
 
-  // --- Form submission ---
   authForm.addEventListener('submit', (e) => {
     e.preventDefault();
 
     const isLogin = tabLogin.classList.contains('active');
     const password = passwordInput.value.trim();
     const confirm = confirmInput.value.trim();
-
-    // Basic validations
-    // Run field validators and block submit if any errors
     const emailOk = validateEmailField();
     const passwordOk = validatePasswordField();
     const confirmOk = validateConfirmField();
@@ -92,35 +109,19 @@ document.addEventListener('DOMContentLoaded', function () {
     }
     errorMsg.innerText = '';
 
-    // Simulate loading
     const originalText = submitBtn.innerText;
     submitBtn.innerText = 'Please wait...';
     submitBtn.disabled = true;
 
     setTimeout(() => {
-      // Hide form, show done state
-      formState.classList.add('hidden');
-      doneState.classList.remove('hidden');
-
-      // Customize done message based on mode
-      if (isLogin) {
-        doneTitle.innerText = 'Welcome back!';
-      } else {
-        doneTitle.innerText = 'Account created!';
-      }
-
-      // Re-enable button (though form hidden)
-      submitBtn.innerText = originalText;
-      submitBtn.disabled = false;
+      window.location.href = '../Dashboard/dashboard.html';
     }, 1000);
   });
   
-  // --- Go to Dashboard (back home) ---
   goDashboard.addEventListener('click', () => {
     window.location.href = '../Dashboard/dashboard.html';
   });
 
-  // --- Validation helpers (live) ---
   function setFieldError(inputEl, errorEl, message) {
     if (!errorEl || !inputEl) return;
     if (message) {
@@ -131,6 +132,30 @@ document.addEventListener('DOMContentLoaded', function () {
     errorEl.innerText = '';
     inputEl.classList.remove('invalid');
     return true;
+  }
+
+  function updatePasswordRequirements(password) {
+    const reqLength = document.getElementById('req-length');
+    const reqUpper = document.getElementById('req-upper');
+    const reqLower = document.getElementById('req-lower');
+    const reqDigit = document.getElementById('req-digit');
+    const reqSpecial = document.getElementById('req-special');
+
+    const checks = {
+      length: password.length >= 8,
+      upper: /[A-Z]/.test(password),
+      lower: /[a-z]/.test(password),
+      digit: /\d/.test(password),
+      special: /[^A-Za-z0-9]/.test(password)
+    };
+
+    reqLength.classList.toggle('valid', checks.length);
+    reqUpper.classList.toggle('valid', checks.upper);
+    reqLower.classList.toggle('valid', checks.lower);
+    reqDigit.classList.toggle('valid', checks.digit);
+    reqSpecial.classList.toggle('valid', checks.special);
+
+    return Object.values(checks).every(val => val);
   }
 
   function validateEmailField() {
@@ -144,7 +169,11 @@ document.addEventListener('DOMContentLoaded', function () {
   function validatePasswordField() {
     const v = passwordInput.value;
     if (!v) return setFieldError(passwordInput, passwordError, 'Password is required.');
-    // stronger policy: min 8 chars, at least one uppercase, one lowercase, one digit, one special char
+    
+    // Update requirements display
+    updatePasswordRequirements(v);
+    
+    // Check all requirements
     if (v.length < 8) return setFieldError(passwordInput, passwordError, 'Password must be at least 8 characters.');
     if (!/[A-Z]/.test(v)) return setFieldError(passwordInput, passwordError, 'Include at least one uppercase letter.');
     if (!/[a-z]/.test(v)) return setFieldError(passwordInput, passwordError, 'Include at least one lowercase letter.');
@@ -176,13 +205,14 @@ document.addEventListener('DOMContentLoaded', function () {
     return setFieldError(nameInput, nameError, '');
   }
 
-  // Attach live listeners
   emailInput.addEventListener('input', () => { validateEmailField(); errorMsg.innerText = ''; });
-  passwordInput.addEventListener('input', () => { validatePasswordField(); validateConfirmField(); errorMsg.innerText = ''; });
+  passwordInput.addEventListener('input', () => { 
+    validatePasswordField(); 
+    validateConfirmField(); 
+    errorMsg.innerText = ''; 
+  });
   confirmInput.addEventListener('input', () => { validateConfirmField(); errorMsg.innerText = ''; });
   nameInput.addEventListener('input', () => { validateNameField(); errorMsg.innerText = ''; });
-
-  // --- Initialize (default login) ---
   setMode('login');
 
   // Prevent any stray form submissions from reloading

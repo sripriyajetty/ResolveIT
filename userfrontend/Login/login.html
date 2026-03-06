@@ -50,6 +50,7 @@
           <div class="form-field hidden" id="nameField">
             <label>Full Name</label>
             <input type="text" name="name" placeholder="Your full name" class="login-input" id="nameInput">
+            <div class="field-error" id="nameError"></div>
           </div>
 
           <div class="form-field">
@@ -63,14 +64,30 @@
               <label>Password</label>
               <a href="#" id="forgotLink">Forgot password?</a>
             </div>
-            <input type="password" name="password" required class="login-input" id="passwordInput">
+            <div class="password-input-wrapper">
+              <input type="password" name="password" required class="login-input" id="passwordInput">
+              <button type="button" class="show-password-btn" id="showPasswordBtn" title="Show password">👁️</button>
+            </div>
             <div class="field-error" id="passwordError"></div>
+            <div class="password-requirements hidden" id="passwordRequirements">
+              <small>Password must contain:</small>
+              <ul>
+                <li id="req-length">8+ characters</li>
+                <li id="req-upper">1 uppercase letter (A-Z)</li>
+                <li id="req-lower">1 lowercase letter (a-z)</li>
+                <li id="req-digit">1 digit (0-9)</li>
+                <li id="req-special">1 special character (!@#$%^&*)</li>
+              </ul>
+            </div>
           </div>
 
           <!-- Confirm password (hidden by default) -->
           <div class="form-field hidden" id="confirmField">
             <label>Confirm Password</label>
-            <input type="password" name="confirm" class="login-input" id="confirmInput">
+            <div class="password-input-wrapper">
+              <input type="password" name="confirm" class="login-input" id="confirmInput">
+              <button type="button" class="show-password-btn" id="showConfirmPasswordBtn" title="Show password">👁️</button>
+            </div>
             <div class="field-error" id="confirmError"></div>
           </div>
 

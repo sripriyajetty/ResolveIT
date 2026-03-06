@@ -17,8 +17,28 @@ document.addEventListener('DOMContentLoaded', function () {
   // inputs
   const emailInput = document.getElementById('emailInput');
   const passwordInput = document.getElementById('passwordInput');
+  const showPasswordBtn = document.getElementById('showPasswordBtn');
+  const guidelinesModal = document.getElementById('guidelinesModal');
+  const closeGuidelinesBtn = document.getElementById('closeGuidelinesBtn');
+  const acknowledgeGuidelinesBtn = document.getElementById('acknowledgeGuidelinesBtn');
 
+  // --- Show/Hide Password Toggle ---
+  showPasswordBtn.addEventListener('click', (e) => {
+    e.preventDefault();
+    const isPassword = passwordInput.type === 'password';
+    passwordInput.type = isPassword ? 'text' : 'password';
+    showPasswordBtn.innerText = isPassword ? '👁️‍🗨️' : '👁️';
+  });
 
+  // --- Guidelines Modal ---
+  closeGuidelinesBtn.addEventListener('click', () => {
+    guidelinesModal.classList.add('hidden');
+  });
+
+  acknowledgeGuidelinesBtn.addEventListener('click', () => {
+    guidelinesModal.classList.add('hidden');
+    window.location.href = '../Dashboard/dashboard.html';
+  });
 
   // --- Back to home (home.html) ---
   backBtn.addEventListener('click', () => {
@@ -50,12 +70,8 @@ document.addEventListener('DOMContentLoaded', function () {
     submitBtn.disabled = true;
 
     setTimeout(() => {
-      // Hide form, show done state
       formState.classList.add('hidden');
-      doneState.classList.remove('hidden');
-      doneTitle.innerText = 'Welcome back!';
-
-      // Re-enable button (though form hidden)
+      guidelinesModal.classList.remove('hidden');
       submitBtn.innerText = originalText;
       submitBtn.disabled = false;
     }, 1000);

@@ -16,8 +16,15 @@ document.addEventListener('DOMContentLoaded', function () {
   // inputs
   const emailInput = document.getElementById('emailInput');
   const passwordInput = document.getElementById('passwordInput');
+  const showPasswordBtn = document.getElementById('showPasswordBtn');
 
-
+  // --- Show/Hide Password Toggle ---
+  showPasswordBtn.addEventListener('click', (e) => {
+    e.preventDefault();
+    const isPassword = passwordInput.type === 'password';
+    passwordInput.type = isPassword ? 'text' : 'password';
+    showPasswordBtn.innerText = isPassword ? '👁️‍🗨️' : '👁️';
+  });
 
   // --- Back to home (home.html) ---
   backBtn.addEventListener('click', () => {
@@ -49,14 +56,7 @@ document.addEventListener('DOMContentLoaded', function () {
     submitBtn.disabled = true;
 
     setTimeout(() => {
-      // Hide form, show done state
-      formState.classList.add('hidden');
-      doneState.classList.remove('hidden');
-      doneTitle.innerText = 'Welcome back!';
-
-      // Re-enable button (though form hidden)
-      submitBtn.innerText = originalText;
-      submitBtn.disabled = false;
+      window.location.href = '../Dashboard/dashboard.html';
     }, 1000);
   });
 

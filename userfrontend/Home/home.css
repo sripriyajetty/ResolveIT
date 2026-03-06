@@ -18,6 +18,7 @@ body {
   background: #ffffff;
   color: #1a1a1a;
   line-height: 1.5;
+  padding-top: 64px;
 }
 
 /* === ANIMATIONS === */
@@ -59,7 +60,7 @@ body {
   font-family: 'DM Sans', sans-serif;
   font-weight: 600;
   cursor: pointer;
-  transition: background 0.2s, transform 0.15s;
+  transition: 0.2s, transform 0.15s;
   display: inline-flex;
   align-items: center;
   gap: 8px;
@@ -94,9 +95,10 @@ body {
 
 /* === NAVIGATION === */
 .navbar {
-  position: sticky;
-  top: 0;
-  z-index: 100;
+  position: fixed; 
+  top: 0;  
+  width: 100%;  
+  z-index: 1000; 
   background: rgba(255, 255, 255, 0.95);
   backdrop-filter: blur(12px);
   border-bottom: 1px solid #f0f0f0;
@@ -175,8 +177,7 @@ body {
   z-index: 10;
   width: 100%;
   /* Restore the padding here so text doesn't touch the edge */
-  padding: 0 60px; 
-  margin-top: 60px; /* Space for navbar */
+  padding: 0 60px;
 }
 
 .hero-content {
