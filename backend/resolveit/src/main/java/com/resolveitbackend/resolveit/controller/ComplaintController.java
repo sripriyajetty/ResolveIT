@@ -6,6 +6,7 @@ import com.resolveitbackend.resolveit.service.ComplaintService;
 import com.resolveitbackend.resolveit.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
@@ -85,6 +86,22 @@ public class ComplaintController {
         return ResponseEntity.ok(complaint);
     }
 
+    @GetMapping("/{id}/detail")
+    @PreAuthorize("hasAnyRole('COMMITTEE', 'ADMIN')")
+    public ResponseEntity<?> getComplaintDetail(@PathVariable Long id) {
+        return complaintService.getComplaintById(id)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
+    }
+
+    // GET /api/complaints — admin can fetch all complaints
+    @GetMapping
+    @org.springframework.security.access.prepost.PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<List<Complaint>> getAllComplaints() {
+        List<Complaint> complaints = complaintService.getAllComplaints();
+        return ResponseEntity.ok(complaints);
+    }
+
     @PutMapping("/{complaintId}/status")
     public ResponseEntity<?> updateStatus(
             @PathVariable Long complaintId,
@@ -96,14 +113,6 @@ public class ComplaintController {
 
             User user = userService.findByEmail(email)
                     .orElseThrow(() -> new RuntimeException("User not found"));
-
-            // Only admins can update status
-            boolean isAdmin = userDetails.getAuthorities().stream()
-                    .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
-
-            if (!isAdmin) {
-                return ResponseEntity.status(403).body("Only admins can update complaint status");
-            }
 
             Complaint updated = complaintService.updateStatus(complaintId, status, user.getId());
             return ResponseEntity.ok(updated);

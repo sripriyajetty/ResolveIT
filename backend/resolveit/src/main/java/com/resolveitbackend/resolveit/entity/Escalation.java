@@ -21,7 +21,7 @@ public class Escalation {
     @Column(nullable = false)
     private Long escalatedBy;             // ID of committee member who escalated
 
-    private Long escalatedTo;             // optional: ID of person/committee it's escalated to
+    private String escalatedTo;             // optional: ID of person/committee it's escalated to
 
     @Column(nullable = false)
     private LocalDateTime escalatedAt;

@@ -1,360 +1,388 @@
-// Sample data for reports
-const reportData = {
-    grievances: {
-        total: 156,
-        resolved: 98,
-        pending: 42,
-        escalated: 16,
-        byType: {
-            'Verbal Harassment': 45,
-            'Physical Harassment': 28,
-            'Cyber Harassment': 35,
-            'Discrimination': 32,
-            'Other': 16
-        },
-        byPriority: {
-            'High': 52,
-            'Medium': 68,
-            'Low': 36
-        },
-        monthly: [
-            { month: 'Jan', new: 12, resolved: 10 },
-            { month: 'Feb', new: 15, resolved: 12 },
-            { month: 'Mar', new: 18, resolved: 15 },
-            { month: 'Apr', new: 14, resolved: 13 },
-            { month: 'May', new: 20, resolved: 16 },
-            { month: 'Jun', new: 22, resolved: 18 }
-        ]
-    },
-    committee: [
-        { name: 'Sarah Johnson', assigned: 12, resolved: 10, avgTime: '4.2 days', satisfaction: 4.8 },
-        { name: 'Emily Davis', assigned: 10, resolved: 9, avgTime: '3.8 days', satisfaction: 4.9 },
-        { name: 'Rachel Green', assigned: 15, resolved: 12, avgTime: '5.1 days', satisfaction: 4.5 },
-        { name: 'Monica Geller', assigned: 8, resolved: 7, avgTime: '3.5 days', satisfaction: 5.0 }
-    ]
-};
+let typeChart, priorityChart, trendChart, resolutionChart;
+let currentDays = 30;
 
-// Initialize charts and data
-document.addEventListener('DOMContentLoaded', function() {
-    updateSummaryCards();
-    initializeCharts();
-    loadDetailedReports();
+// ─── Init ────────────────────────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', async function () {
+  await Promise.all([
+    loadSummaryCards(),
+    loadCharts(),
+    loadGrievanceReport(),
+    loadCommitteeReport()
+  ]);
 });
 
-// Update summary cards
-function updateSummaryCards() {
-    document.getElementById('totalGrievances').textContent = reportData.grievances.total;
-    document.getElementById('resolvedCount').textContent = reportData.grievances.resolved;
-    
-    const avgTime = calculateAvgResolutionTime();
-    document.getElementById('avgTime').textContent = avgTime;
-    
-    const satisfaction = calculateSatisfactionRate();
-    document.getElementById('satisfactionRate').textContent = satisfaction + '%';
-}
+// ─── Summary Cards ───────────────────────────────────────────────────────────
+async function loadSummaryCards() {
+  try {
+    // GET /api/admin/reports/complaints-by-status
+    // Response: { "SUBMITTED": 20, "UNDER_REVIEW": 15, "RESOLVED": 98, "ESCALATED": 8, ... }
+    const statusMap = await apiCall('/admin/reports/complaints-by-status');
 
-// Calculate average resolution time
-function calculateAvgResolutionTime() {
-    // In real app, calculate from actual data
-    return '4.5 days';
-}
+    const total    = Object.values(statusMap).reduce((a, b) => a + b, 0);
+    const resolved = statusMap['RESOLVED'] || statusMap['Resolved'] || 0;
 
-// Calculate satisfaction rate
-function calculateSatisfactionRate() {
-    // In real app, calculate from feedback data
-    return 87;
-}
+    document.getElementById('totalGrievances').textContent = total;
+    document.getElementById('resolvedCount').textContent   = resolved;
 
-// Initialize all charts
-function initializeCharts() {
-    createTypeChart();
-    createPriorityChart();
-    createTrendChart();
-    createResolutionChart();
-}
+    // Resolution rate as a proxy for satisfaction (real feedback endpoint can override)
+    const rate = total > 0 ? Math.round((resolved / total) * 100) : 0;
+    document.getElementById('satisfactionRate').textContent = rate + '%';
 
-// Create grievance type chart
-function createTypeChart() {
-    const ctx = document.getElementById('typeChart').getContext('2d');
-    new Chart(ctx, {
-        type: 'pie',
-        data: {
-            labels: Object.keys(reportData.grievances.byType),
-            datasets: [{
-                data: Object.values(reportData.grievances.byType),
-                backgroundColor: [
-                    '#ff6384',
-                    '#36a2eb',
-                    '#ffce56',
-                    '#4bc0c0',
-                    '#9966ff'
-                ]
-            }]
-        },
-        options: {
-            responsive: true,
-            plugins: {
-                legend: {
-                    position: 'bottom'
-                }
-            }
-        }
+  } catch (err) {
+    console.error('Summary cards error:', err.message);
+    ['totalGrievances', 'resolvedCount', 'satisfactionRate'].forEach(id => {
+      document.getElementById(id).textContent = '--';
     });
+  }
+
+  // Avg resolution time — not yet in backend, show placeholder
+  document.getElementById('avgTime').textContent = 'N/A';
 }
 
-// Create priority chart
-function createPriorityChart() {
-    const ctx = document.getElementById('priorityChart').getContext('2d');
-    new Chart(ctx, {
-        type: 'doughnut',
-        data: {
-            labels: Object.keys(reportData.grievances.byPriority),
-            datasets: [{
-                data: Object.values(reportData.grievances.byPriority),
-                backgroundColor: ['#dc3545', '#ffc107', '#28a745']
-            }]
-        },
-        options: {
-            responsive: true,
-            plugins: {
-                legend: {
-                    position: 'bottom'
-                }
-            }
-        }
-    });
+// ─── Charts ──────────────────────────────────────────────────────────────────
+async function loadCharts() {
+  try {
+    const [statusMap, actionSummary, escalationTrends] = await Promise.all([
+      apiCall('/admin/reports/complaints-by-status'),
+      apiCall('/admin/reports/action-summary'),
+      apiCall(`/admin/reports/escalation-trends?days=${currentDays}`)
+    ]);
+
+    renderTypeChart(statusMap);
+    renderPriorityChart(statusMap);
+    renderTrendChart(escalationTrends);
+    renderResolutionChart(actionSummary);
+
+  } catch (err) {
+    console.error('Charts error:', err.message);
+  }
 }
 
-// Create trend chart
-function createTrendChart() {
-    const ctx = document.getElementById('trendChart').getContext('2d');
-    new Chart(ctx, {
-        type: 'line',
-        data: {
-            labels: reportData.grievances.monthly.map(m => m.month),
-            datasets: [
-                {
-                    label: 'New Cases',
-                    data: reportData.grievances.monthly.map(m => m.new),
-                    borderColor: '#36a2eb',
-                    tension: 0.1
-                },
-                {
-                    label: 'Resolved',
-                    data: reportData.grievances.monthly.map(m => m.resolved),
-                    borderColor: '#28a745',
-                    tension: 0.1
-                }
-            ]
-        },
-        options: {
-            responsive: true,
-            scales: {
-                y: {
-                    beginAtZero: true
-                }
-            }
-        }
-    });
-}
+// Chart 1 – Complaints by Status (pie)
+function renderTypeChart(statusMap) {
+  const ctx = document.getElementById('typeChart').getContext('2d');
+  if (typeChart) typeChart.destroy();
 
-// Create resolution time chart
-function createResolutionChart() {
-    const ctx = document.getElementById('resolutionChart').getContext('2d');
-    new Chart(ctx, {
-        type: 'bar',
-        data: {
-            labels: ['Verbal', 'Physical', 'Cyber', 'Discrimination'],
-            datasets: [{
-                label: 'Avg Resolution Time (days)',
-                data: [3.5, 5.2, 4.8, 4.1],
-                backgroundColor: '#667eea'
-            }]
-        },
-        options: {
-            responsive: true,
-            scales: {
-                y: {
-                    beginAtZero: true
-                }
-            }
-        }
-    });
-}
-
-// Load detailed reports
-function loadDetailedReports() {
-    // Load grievance report
-    const grievanceBody = document.getElementById('grievanceTableBody');
-    grievanceBody.innerHTML = reportData.grievances.monthly.map((m, index) => `
-        <tr>
-            <td>${m.month} 2024</td>
-            <td>${m.new}</td>
-            <td>${m.resolved}</td>
-            <td>${m.new - m.resolved}</td>
-            <td>${Math.floor(Math.random() * 3)}</td>
-            <td>${Math.round((m.resolved / m.new) * 100)}%</td>
-        </tr>
-    `).join('');
-    
-    // Load committee report
-    const committeeBody = document.getElementById('committeeTableBody');
-    committeeBody.innerHTML = reportData.committee.map(c => `
-        <tr>
-            <td>${c.name}</td>
-            <td>${c.assigned}</td>
-            <td>${c.resolved}</td>
-            <td>${c.avgTime}</td>
-            <td>${c.satisfaction}/5.0</td>
-            <td>
-                <div class="performance-bar">
-                    <div class="performance-fill" style="width: ${(c.resolved / c.assigned) * 100}%"></div>
-                </div>
-            </td>
-        </tr>
-    `).join('');
-}
-
-// Set date range
-function setDateRange(range) {
-    document.querySelectorAll('.range-btn').forEach(btn => {
-        btn.classList.remove('active');
-    });
-    event.currentTarget.classList.add('active');
-    
-    if (range === 'custom') {
-        document.getElementById('customRange').style.display = 'flex';
-    } else {
-        document.getElementById('customRange').style.display = 'none';
-        // Update charts with new range
-        showToast(`Showing data for: ${range}`, 'info');
+  typeChart = new Chart(ctx, {
+    type: 'pie',
+    data: {
+      labels: Object.keys(statusMap),
+      datasets: [{
+        data: Object.values(statusMap),
+        backgroundColor: ['#ff6384', '#36a2eb', '#ffce56', '#4bc0c0', '#9966ff', '#ff9f40']
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: { legend: { position: 'bottom' } }
     }
+  });
 }
 
-// Apply custom date range
-function applyCustomRange() {
-    const start = document.getElementById('startDate').value;
-    const end = document.getElementById('endDate').value;
-    
-    if (start && end) {
-        showToast(`Showing data from ${start} to ${end}`, 'info');
-    } else {
-        showToast('Please select both dates', 'error');
+// Chart 2 – Complaints by Status breakdown 
+function renderPriorityChart(statusMap) {
+  const ctx = document.getElementById('priorityChart').getContext('2d');
+  if (priorityChart) priorityChart.destroy();
+
+  // Group into Resolved / Active / Escalated
+  const resolved  = statusMap['RESOLVED']   || statusMap['Resolved']   || 0;
+  const escalated = statusMap['ESCALATED']  || statusMap['Escalated']  || 0;
+  const active    = Object.entries(statusMap)
+    .filter(([k]) => !['RESOLVED','Resolved','ESCALATED','Escalated'].includes(k))
+    .reduce((sum, [, v]) => sum + v, 0);
+
+  priorityChart = new Chart(ctx, {
+    type: 'doughnut',
+    data: {
+      labels: ['Resolved', 'Active', 'Escalated'],
+      datasets: [{
+        data: [resolved, active, escalated],
+        backgroundColor: ['#28a745', '#ffc107', '#dc3545']
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: { legend: { position: 'bottom' } }
     }
+  });
 }
 
-// Show different report tabs
+// Chart 3 – Escalation trends over time (line)
+// Response: { "2024-05-01": 3, "2024-05-02": 1, ... }
+function renderTrendChart(escalationTrends) {
+  const ctx = document.getElementById('trendChart').getContext('2d');
+  if (trendChart) trendChart.destroy();
+
+  const sorted  = Object.entries(escalationTrends).sort(([a], [b]) => a.localeCompare(b));
+  const labels  = sorted.map(([date]) => formatDate(date));
+  const values  = sorted.map(([, count]) => count);
+
+  trendChart = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [{
+        label: 'Escalations',
+        data: values,
+        borderColor: '#36a2eb',
+        backgroundColor: 'rgba(54,162,235,0.1)',
+        tension: 0.3,
+        fill: true
+      }]
+    },
+    options: {
+      responsive: true,
+      scales: { y: { beginAtZero: true } }
+    }
+  });
+}
+
+// Chart 4 – Action type summary (bar)
+// Response: { "COMPLAINT_SUBMITTED": 45, "STATUS_UPDATED": 30, ... }
+function renderResolutionChart(actionSummary) {
+  const ctx = document.getElementById('resolutionChart').getContext('2d');
+  if (resolutionChart) resolutionChart.destroy();
+
+  resolutionChart = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: Object.keys(actionSummary).map(k => k.replace(/_/g, ' ')),
+      datasets: [{
+        label: 'Action Count',
+        data: Object.values(actionSummary),
+        backgroundColor: '#667eea'
+      }]
+    },
+    options: {
+      responsive: true,
+      scales: { y: { beginAtZero: true } }
+    }
+  });
+}
+
+// ─── Detailed Reports ─────────────────────────────────────────────────────────
+
+// Grievance Report tab — complaints by status as a table
+async function loadGrievanceReport() {
+  const tbody = document.getElementById('grievanceTableBody');
+  try {
+    const statusMap = await apiCall('/admin/reports/complaints-by-status');
+    const total     = Object.values(statusMap).reduce((a, b) => a + b, 0);
+    const resolved  = statusMap['RESOLVED']  || statusMap['Resolved']  || 0;
+    const escalated = statusMap['ESCALATED'] || statusMap['Escalated'] || 0;
+    const pending   = total - resolved - escalated;
+    const rate      = total > 0 ? Math.round((resolved / total) * 100) : 0;
+
+    tbody.innerHTML = `
+      <tr>
+        <td>Current Period</td>
+        <td>${total}</td>
+        <td>${resolved}</td>
+        <td>${pending > 0 ? pending : 0}</td>
+        <td>${escalated}</td>
+        <td>${rate}%</td>
+      </tr>
+      ${Object.entries(statusMap).map(([status, count]) => `
+        <tr>
+          <td colspan="1" style="padding-left:2rem; color:#888;">${status}</td>
+          <td>${count}</td>
+          <td>–</td><td>–</td><td>–</td><td>–</td>
+        </tr>
+      `).join('')}
+    `;
+  } catch (err) {
+    tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;color:#aaa;">Failed to load data</td></tr>`;
+  }
+}
+
+// Committee Performance tab — GET /api/admin/users/committee + /api/admin/reports/user-activity
+async function loadCommitteeReport() {
+  const tbody = document.getElementById('committeeTableBody');
+  try {
+    // Fetch committee members (ROLE_COMMITTEE only) and their action counts in parallel
+    const [members, activity] = await Promise.all([
+      apiCall('/admin/users/committee'),
+      apiCall('/admin/reports/user-activity')
+    ]);
+
+    if (!members || members.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;color:#aaa;">No committee members found</td></tr>`;
+      return;
+    }
+
+    // Build a quick lookup: userId -> actionCount
+    const activityMap = {};
+    (activity || []).forEach(row => { activityMap[row.userId] = row.actionCount || 0; });
+
+    tbody.innerHTML = members.map(member => {
+      const actions = activityMap[member.id] || 0;
+      const pct     = Math.min(100, Math.round((actions / 50) * 100));
+      return `
+        <tr>
+          <td>${member.name}</td>
+          <td>${actions}</td>
+          <td>–</td>
+          <td>–</td>
+          <td>–</td>
+          <td>
+            <div class="performance-bar">
+              <div class="performance-fill" style="width:${pct}%"></div>
+            </div>
+          </td>
+        </tr>
+      `;
+    }).join('');
+  } catch (err) {
+    tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;color:#aaa;">Failed to load data</td></tr>`;
+  }
+}
+
+// ─── Tab Switching ────────────────────────────────────────────────────────────
 function showReport(type) {
-    document.querySelectorAll('.report-tab').forEach(btn => {
-        btn.classList.remove('active');
-    });
-    event.currentTarget.classList.add('active');
-    
-    // Hide all reports
-    document.getElementById('grievanceReport').style.display = 'none';
-    document.getElementById('committeeReport').style.display = 'none';
-    document.getElementById('feedbackReport').style.display = 'none';
-    document.getElementById('escalationReport').style.display = 'none';
-    
-    // Show selected report
-    switch(type) {
-        case 'grievance':
-            document.getElementById('grievanceReport').style.display = 'block';
-            break;
-        case 'committee':
-            document.getElementById('committeeReport').style.display = 'block';
-            break;
-        case 'feedback':
-            document.getElementById('feedbackReport').style.display = 'block';
-            document.getElementById('feedbackReport').innerHTML = generateFeedbackReport();
-            break;
-        case 'escalation':
-            document.getElementById('escalationReport').style.display = 'block';
-            document.getElementById('escalationReport').innerHTML = generateEscalationReport();
-            break;
-    }
+  document.querySelectorAll('.report-tab').forEach(btn => btn.classList.remove('active'));
+  event.currentTarget.classList.add('active');
+
+  ['grievanceReport','committeeReport','feedbackReport','escalationReport'].forEach(id => {
+    document.getElementById(id).style.display = 'none';
+  });
+
+  switch (type) {
+    case 'grievance':
+      document.getElementById('grievanceReport').style.display = 'block';
+      break;
+    case 'committee':
+      document.getElementById('committeeReport').style.display = 'block';
+      break;
+    case 'feedback':
+      document.getElementById('feedbackReport').style.display = 'block';
+      document.getElementById('feedbackReport').innerHTML = generateFeedbackPlaceholder();
+      break;
+    case 'escalation':
+      document.getElementById('escalationReport').style.display = 'block';
+      loadEscalationReport();
+      break;
+  }
 }
 
-// Generate feedback report
-function generateFeedbackReport() {
-    return `
-        <div class="feedback-stats">
-            <div class="feedback-stat">
-                <h4>Average Rating</h4>
-                <div class="big-number">4.2/5.0</div>
-                <p>Based on 89 responses</p>
-            </div>
-            <div class="feedback-stat">
-                <h4>Response Rate</h4>
-                <div class="big-number">72%</div>
-                <p>Victims who provided feedback</p>
-            </div>
-            <div class="feedback-stat">
-                <h4>Positive Feedback</h4>
-                <div class="big-number">85%</div>
-                <p>Rated 4 or 5 stars</p>
-            </div>
+// Escalation report — live from API
+async function loadEscalationReport() {
+  const el = document.getElementById('escalationReport');
+  el.innerHTML = '<p style="color:#aaa; padding:1rem;">Loading...</p>';
+  try {
+    const trends    = await apiCall(`/admin/reports/escalation-trends?days=${currentDays}`);
+    const total     = Object.values(trends).reduce((a, b) => a + b, 0);
+    const sorted    = Object.entries(trends).sort(([a], [b]) => a.localeCompare(b));
+    const last7     = sorted.slice(-7).reduce((s, [, v]) => s + v, 0);
+    const prev7     = sorted.slice(-14, -7).reduce((s, [, v]) => s + v, 0);
+    const trend     = prev7 > 0 ? Math.round(((last7 - prev7) / prev7) * 100) : 0;
+    const trendSign = trend >= 0 ? '↑' : '↓';
+    const trendCls  = trend >= 0 ? 'trend-up' : 'trend-down';
+
+    el.innerHTML = `
+      <div class="escalation-stats">
+        <div class="escalation-stat critical">
+          <h4>Last 7 Days</h4>
+          <div class="big-number">${last7}</div>
+          <p>Escalations</p>
         </div>
-        <div class="feedback-comments">
-            <h4>Recent Feedback Comments</h4>
-            <div class="comment-list">
-                <div class="comment-item">
-                    <div class="comment-rating">★★★★★</div>
-                    <p>"Very supportive throughout the process"</p>
-                    <small>- Victim, 2 days ago</small>
-                </div>
-                <div class="comment-item">
-                    <div class="comment-rating">★★★★☆</div>
-                    <p>"Quick response but could be faster"</p>
-                    <small>- Victim, 3 days ago</small>
-                </div>
-            </div>
+        <div class="escalation-stat high">
+          <h4>Last ${currentDays} Days</h4>
+          <div class="big-number">${total}</div>
+          <p>Total escalations</p>
         </div>
+        <div class="escalation-stat resolved">
+          <h4>Week-on-Week</h4>
+          <div class="big-number">${Math.abs(trend)}%</div>
+          <p><span class="${trendCls}">${trendSign} ${Math.abs(trend)}%</span> vs prior week</p>
+        </div>
+      </div>
+      <div class="escalation-trend" style="margin-top:1rem;">
+        <h4>Daily Breakdown (last ${currentDays} days)</h4>
+        <table class="report-table" style="margin-top:1rem;">
+          <thead><tr><th>Date</th><th>Escalations</th></tr></thead>
+          <tbody>
+            ${sorted.map(([date, count]) => `
+              <tr><td>${formatDate(date)}</td><td>${count}</td></tr>
+            `).join('')}
+          </tbody>
+        </table>
+      </div>
     `;
+  } catch (err) {
+    el.innerHTML = `<p style="color:#aaa; padding:1rem;">Failed to load escalation data.</p>`;
+  }
 }
 
-// Generate escalation report
-function generateEscalationReport() {
-    return `
-        <div class="escalation-stats">
-            <div class="escalation-stat critical">
-                <h4>Critical Escalations</h4>
-                <div class="big-number">8</div>
-                <p>Require immediate attention</p>
-            </div>
-            <div class="escalation-stat high">
-                <h4>High Priority</h4>
-                <div class="big-number">15</div>
-                <p>Need review this week</p>
-            </div>
-            <div class="escalation-stat resolved">
-                <h4>Resolved Escalations</h4>
-                <div class="big-number">23</div>
-                <p>Successfully handled</p>
-            </div>
-        </div>
-        <div class="escalation-trend">
-            <h4>Escalation Trends</h4>
-            <p>Month-over-month: <span class="trend-up">↑ 12%</span></p>
-            <p>Common reasons: Legal intervention (45%), Authority approval (30%)</p>
-        </div>
-    `;
+// Feedback placeholder (backend endpoint not available yet)
+function generateFeedbackPlaceholder() {
+  return `
+    <div class="feedback-stats">
+      <div class="feedback-stat">
+        <h4>Average Rating</h4>
+        <div class="big-number">–</div>
+        <p>Feedback API coming soon</p>
+      </div>
+      <div class="feedback-stat">
+        <h4>Response Rate</h4>
+        <div class="big-number">–</div>
+        <p>Feedback API coming soon</p>
+      </div>
+      <div class="feedback-stat">
+        <h4>Positive Feedback</h4>
+        <div class="big-number">–</div>
+        <p>Feedback API coming soon</p>
+      </div>
+    </div>
+  `;
 }
 
-// Export reports
+// ─── Date Range ───────────────────────────────────────────────────────────────
+function setDateRange(range) {
+  document.querySelectorAll('.range-btn').forEach(btn => btn.classList.remove('active'));
+  event.currentTarget.classList.add('active');
+
+  const customRange = document.getElementById('customRange');
+
+  if (range === 'custom') {
+    customRange.style.display = 'flex';
+    return;
+  }
+
+  customRange.style.display = 'none';
+
+  const daysMap = { week: 7, month: 30, quarter: 90, year: 365 };
+  currentDays = daysMap[range] || 30;
+
+  // Reload charts with new window
+  loadCharts();
+}
+
+function applyCustomRange() {
+  const start = document.getElementById('startDate').value;
+  const end   = document.getElementById('endDate').value;
+  if (!start || !end) {
+    alert('Please select both start and end dates.');
+    return;
+  }
+  const diff  = Math.ceil((new Date(end) - new Date(start)) / (1000 * 60 * 60 * 24));
+  currentDays = diff > 0 ? diff : 30;
+  loadCharts();
+}
+
+// ─── Export (placeholder — implement server-side export when ready) ────────────
 function exportReport(format) {
-    showToast(`Exporting report as ${format.toUpperCase()}...`, 'info');
-    // In real app, implement actual export logic
+  alert(`Export as ${format.toUpperCase()} — coming soon.`);
 }
 
-// Show toast
-function showToast(message, type = 'info') {
-    // Implement toast notification
-    alert(message); // Placeholder
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+function formatDate(dateStr) {
+  if (!dateStr) return '–';
+  const d = new Date(dateStr);
+  return d.toLocaleDateString('en-IN', { day: '2-digit', month: 'short' });
 }
 
-// Make functions globally available
-window.setDateRange = setDateRange;
+// ─── Expose globals ───────────────────────────────────────────────────────────
+window.setDateRange    = setDateRange;
 window.applyCustomRange = applyCustomRange;
-window.showReport = showReport;
-window.exportReport = exportReport;
+window.showReport      = showReport;
+window.exportReport    = exportReport;

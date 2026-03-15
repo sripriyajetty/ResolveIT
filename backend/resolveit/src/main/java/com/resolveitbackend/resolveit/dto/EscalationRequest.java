@@ -6,5 +6,5 @@ import lombok.Data;
 public class EscalationRequest {
     private Long complaintId;
     private String reason;
-    private Long escalatedTo;   // optional: user ID to escalate to
+    private String escalatedTo;   // optional: user ID to escalate to
 }

@@ -40,11 +40,13 @@ public class ComplaintService {
                 complaint.getUserId(),
                 Map.of(
                         "complaintId", savedComplaint.getId(),
-                        "title", savedComplaint.getTitle()
-                )
-        );
+                        "title", savedComplaint.getTitle()));
 
         return savedComplaint;
+    }
+
+    public List<Complaint> getAllComplaints() {
+        return complaintRepository.findAll();
     }
 
     public List<Complaint> getComplaintsByUserId(Long userId) {
@@ -56,12 +58,16 @@ public class ComplaintService {
         Complaint complaint = complaintRepository.findById(complaintId)
                 .orElseThrow(() -> new RuntimeException("Complaint not found"));
 
-        if (!List.of("PENDING", "IN_PROGRESS", "RESOLVED").contains(status)) {
-            throw new RuntimeException("Invalid complaint status");
+        List<String> allowedStatuses = List.of(
+                "PENDING", "UNDER_REVIEW", "INVESTIGATING",
+                "ACTION_TAKEN", "IN_PROGRESS", "RESOLVED", "CLOSED", "ESCALATED");
+
+        if (!allowedStatuses.contains(status.toUpperCase())) {
+            throw new RuntimeException("Invalid complaint status: " + status);
         }
 
         String oldStatus = complaint.getStatus();
-        complaint.setStatus(status);
+        complaint.setStatus(status.toUpperCase()); // normalize to uppercase
 
         Complaint saved = complaintRepository.save(complaint);
 
@@ -71,14 +77,12 @@ public class ComplaintService {
                 Map.of(
                         "complaintId", complaintId,
                         "oldStatus", oldStatus,
-                        "newStatus", status
-                )
-        );
+                        "newStatus", status.toUpperCase()));
 
         return saved;
     }
 
     public Optional<Complaint> getComplaintById(Long id) {
-    return complaintRepository.findById(id);
-}
+        return complaintRepository.findById(id);
+    }
 }

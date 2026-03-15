@@ -32,15 +32,14 @@ public class AssignmentController {
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<?> assignCommitteeMember(@RequestBody AssignmentRequest request) {
         try {
-            // Get current admin ID
             Long adminId = getCurrentUserId();
-
-            // Create assignment entity
+ 
             Assignment assignment = new Assignment();
             assignment.setComplaintId(request.getComplaintId());
             assignment.setCommitteeMemberId(request.getCommitteeMemberId());
-
-            // Process assignment
+            assignment.setNotes(request.getNotes());
+            assignment.setPriority(request.getPriority());
+            assignment.setDeadline(request.getDeadline());
             AssignmentResponse response = assignmentService.assignCommitteeMember(assignment, adminId);
             return ResponseEntity.ok(response);
         } catch (RuntimeException e) {

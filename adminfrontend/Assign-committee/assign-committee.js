@@ -1,373 +1,322 @@
-// Sample data
-let grievances = [
-    {
-        id: 'GRV001',
-        victim: 'Alice Smith',
-        type: 'Verbal Harassment',
-        priority: 'high',
-        date: '2024-01-15',
-        status: 'pending',
-        assignedTo: null
-    },
-    {
-        id: 'GRV002',
-        victim: 'Emma Watson',
-        type: 'Physical Harassment',
-        priority: 'high',
-        date: '2024-01-14',
-        status: 'pending',
-        assignedTo: null
-    },
-    {
-        id: 'GRV003',
-        victim: 'Maria Garcia',
-        type: 'Cyber Harassment',
-        priority: 'medium',
-        date: '2024-01-13',
-        status: 'assigned',
-        assignedTo: 'Sarah Johnson'
-    },
-    {
-        id: 'GRV004',
-        victim: 'Lisa Brown',
-        type: 'Discrimination',
-        priority: 'low',
-        date: '2024-01-12',
-        status: 'pending',
-        assignedTo: null
-    }
-];
+// assign-committee.js – wired to Spring Boot backend
 
-let committeeMembers = [
-    {
-        id: 1,
-        name: 'Sarah Johnson',
-        department: 'HR Committee',
-        expertise: ['Verbal Harassment', 'Discrimination'],
-        currentLoad: 3,
-        maxLoad: 5,
-        status: 'available'
-    },
-    {
-        id: 2,
-        name: 'Emily Davis',
-        department: 'Legal Committee',
-        expertise: ['Physical Harassment', 'Cyber Harassment'],
-        currentLoad: 2,
-        maxLoad: 5,
-        status: 'available'
-    },
-    {
-        id: 3,
-        name: 'Rachel Green',
-        department: 'Women Welfare',
-        expertise: ['All Types'],
-        currentLoad: 4,
-        maxLoad: 5,
-        status: 'busy'
-    },
-    {
-        id: 4,
-        name: 'Monica Geller',
-        department: 'Grievance Redressal',
-        expertise: ['Verbal Harassment', 'Discrimination'],
-        currentLoad: 1,
-        maxLoad: 5,
-        status: 'available'
-    }
-];
+// State
+let allComplaints      = [];  // all unassigned/pending complaints from server
+let committeeMembers   = [];  // all ROLE_COMMITTEE users
+let filteredComplaints = [];  // after filter/search
 
-// Initialize page
-document.addEventListener('DOMContentLoaded', function() {
-    updateStatistics();
-    loadGrievances();
-    loadCommitteeGrid();
-    setDefaultDeadline();
+// ─── Init ─────────────────────────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', async () => {
+  setDefaultDeadline();
+  await Promise.all([fetchComplaints(), fetchCommitteeMembers()]);
+  updateStatistics();
 });
 
-// Update statistics
+// ─── Fetch complaints ─────────────────────────────────────────────────────────
+// GET /api/complaints  (admin can see all)
+// We show only pending/unassigned ones in the table
+async function fetchComplaints() {
+  try {
+    const data = await apiCall('/complaints');
+    allComplaints = Array.isArray(data) ? data : (data.content || []);
+    applyFilters();
+  } catch (err) {
+    document.getElementById('grievancesTableBody').innerHTML =
+      `<tr><td colspan="8" style="text-align:center;color:#e74c3c;padding:30px;">
+         Failed to load complaints: ${err.message}
+       </td></tr>`;
+    showToast('Failed to load complaints', 'error');
+  }
+}
+
+// ─── Fetch committee members ──────────────────────────────────────────────────
+// GET /api/admin/users/committee
+async function fetchCommitteeMembers() {
+  try {
+    committeeMembers = await apiCall('/admin/users/committee');
+    renderCommitteeGrid();
+  } catch (err) {
+    document.getElementById('committeeGrid').innerHTML =
+      `<p style="color:#e74c3c;">Failed to load committee members: ${err.message}</p>`;
+    showToast('Failed to load committee members', 'error');
+  }
+}
+
+// ─── Statistics ───────────────────────────────────────────────────────────────
 function updateStatistics() {
-    const unassigned = grievances.filter(g => !g.assignedTo).length;
-    const available = committeeMembers.filter(m => m.status === 'available').length;
-    
-    document.getElementById('unassignedCount').textContent = unassigned;
-    document.getElementById('availableCommitteeCount').textContent = available;
+  const unassigned = allComplaints.filter(c =>
+    c.status === 'pending' || c.status === 'PENDING'
+  ).length;
+
+  document.getElementById('unassignedCount').textContent        = unassigned;
+  document.getElementById('availableCommitteeCount').textContent = committeeMembers.length;
 }
 
-// Load grievances table
-function loadGrievances() {
-    const tbody = document.getElementById('grievancesTableBody');
-    const priorityFilter = document.getElementById('priorityFilter').value;
-    const typeFilter = document.getElementById('typeFilter').value;
-    const searchTerm = document.getElementById('searchInput')?.value.toLowerCase() || '';
-    
-    let filteredGrievances = grievances.filter(g => g.status === 'pending' || !g.assignedTo);
-    
-    // Apply filters
-    if (priorityFilter !== 'all') {
-        filteredGrievances = filteredGrievances.filter(g => g.priority === priorityFilter);
-    }
-    
-    if (typeFilter !== 'all') {
-        filteredGrievances = filteredGrievances.filter(g => g.type.includes(typeFilter));
-    }
-    
-    if (searchTerm) {
-        filteredGrievances = filteredGrievances.filter(g => 
-            g.id.toLowerCase().includes(searchTerm) ||
-            g.victim.toLowerCase().includes(searchTerm) ||
-            g.type.toLowerCase().includes(searchTerm)
-        );
-    }
-    
-    if (filteredGrievances.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; padding: 30px;">No grievances pending assignment</td></tr>';
-        return;
-    }
-    
-    tbody.innerHTML = filteredGrievances.map(g => `
-        <tr>
-            <td>${g.id}</td>
-            <td>${g.victim}</td>
-            <td>${g.type}</td>
-            <td><span class="priority-badge priority-${g.priority}">${g.priority.toUpperCase()}</span></td>
-            <td>${formatDate(g.date)}</td>
-            <td><span class="status-badge status-${g.status}">${g.status.toUpperCase()}</span></td>
-            <td>${g.assignedTo || '<span style="color:#999;">Not Assigned</span>'}</td>
-            <td>
-                ${!g.assignedTo ? 
-                    `<button class="action-btn assign-btn" onclick="openAssignModal('${g.id}')">
-                        <i class="fas fa-user-plus"></i> Assign
-                    </button>` : 
-                    `<button class="action-btn reassign-btn" onclick="openAssignModal('${g.id}')">
-                        <i class="fas fa-sync-alt"></i> Reassign
-                    </button>`
-                }
-            </td>
-        </tr>
-    `).join('');
-}
+// ─── Render complaints table ──────────────────────────────────────────────────
+function renderComplaintsTable(list) {
+  const tbody = document.getElementById('grievancesTableBody');
 
-// Load committee grid
-function loadCommitteeGrid() {
-    const grid = document.getElementById('committeeGrid');
-    
-    grid.innerHTML = committeeMembers.map(m => `
-        <div class="committee-card ${m.status}">
-            <div class="committee-avatar">
-                <i class="fas fa-user-tie"></i>
-            </div>
-            <div class="committee-info">
-                <h4>${m.name}</h4>
-                <p>${m.department}</p>
-                <div class="expertise-tags">
-                    ${m.expertise.map(e => `<span class="expertise-tag">${e}</span>`).join('')}
-                </div>
-                <div class="workload">
-                    <div class="workload-bar">
-                        <div class="workload-fill" style="width: ${(m.currentLoad/m.maxLoad)*100}%"></div>
-                    </div>
-                    <span>${m.currentLoad}/${m.maxLoad} cases</span>
-                </div>
-                <span class="status-indicator ${m.status}">${m.status}</span>
-            </div>
-        </div>
-    `).join('');
-}
+  if (!list || list.length === 0) {
+    tbody.innerHTML =
+      '<tr><td colspan="8" style="text-align:center;padding:30px;color:#aaa;">No grievances pending assignment</td></tr>';
+    return;
+  }
 
-// Open assign modal
-function openAssignModal(grievanceId) {
-    const grievance = grievances.find(g => g.id === grievanceId);
-    if (!grievance) return;
-    
-    document.getElementById('assignGrievanceId').value = grievanceId;
-    document.getElementById('grievanceInfo').innerHTML = `
-        <p><strong>Grievance:</strong> ${grievance.id} - ${grievance.type}</p>
-        <p><strong>Victim:</strong> ${grievance.victim}</p>
-        <p><strong>Priority:</strong> <span class="priority-badge priority-${grievance.priority}">${grievance.priority}</span></p>
+  tbody.innerHTML = list.map(c => {
+    const status     = (c.status || 'pending').toLowerCase();
+    const isAssigned = status === 'assigned';
+    return `
+      <tr>
+        <td>#${c.id}</td>
+        <td>User #${c.userId}</td>
+        <td>${c.type || '–'}</td>
+        <td><span class="priority-badge priority-medium">–</span></td>
+        <td>${c.incidentDate ? formatDate(c.incidentDate) : formatDate(c.createdAt)}</td>
+        <td><span class="status-badge status-${status}">${status.toUpperCase()}</span></td>
+        <td>${isAssigned ? '<span style="color:#27ae60;">Assigned</span>' : '<span style="color:#999;">Not Assigned</span>'}</td>
+        <td>
+          <button class="action-btn ${isAssigned ? 'reassign-btn' : 'assign-btn'}"
+                  onclick="openAssignModal(${c.id})">
+            <i class="fas fa-${isAssigned ? 'sync-alt' : 'user-plus'}"></i>
+            ${isAssigned ? 'Reassign' : 'Assign'}
+          </button>
+        </td>
+      </tr>
     `;
-    
-    // Populate committee select
-    const select = document.getElementById('committeeSelect');
-    select.innerHTML = '<option value="">Choose a member...</option>' + 
-        committeeMembers.filter(m => m.status === 'available').map(m => 
-            `<option value="${m.id}">${m.name} (${m.currentLoad}/${m.maxLoad} cases) - ${m.department}</option>`
-        ).join('');
-    
-    document.getElementById('assignModal').classList.add('active');
+  }).join('');
 }
 
-// Assign committee
-function assignCommittee(event) {
-    event.preventDefault();
-    
-    const grievanceId = document.getElementById('assignGrievanceId').value;
-    const committeeId = parseInt(document.getElementById('committeeSelect').value);
-    const notes = document.getElementById('assignmentNotes').value;
-    const priority = document.getElementById('assignmentPriority').value;
-    const deadline = document.getElementById('assignmentDeadline').value;
-    
-    const grievance = grievances.find(g => g.id === grievanceId);
-    const committee = committeeMembers.find(m => m.id === committeeId);
-    
-    if (grievance && committee) {
-        // Update grievance
-        grievance.assignedTo = committee.name;
-        grievance.status = 'assigned';
-        grievance.assignedDate = new Date().toISOString();
-        grievance.deadline = deadline;
-        grievance.assignmentNotes = notes;
-        
-        // Update committee workload
-        committee.currentLoad++;
-        if (committee.currentLoad >= committee.maxLoad) {
-            committee.status = 'busy';
-        }
-        
-        showToast(`Grievance assigned to ${committee.name}`, 'success');
-        closeModal('assignModal');
-        
-        // Refresh data
-        updateStatistics();
-        loadGrievances();
-        loadCommitteeGrid();
-        
-        // Log the action
-        logAudit('Assigned grievance', {
-            grievance: grievanceId,
-            committee: committee.name,
-            priority: priority,
-            deadline: deadline
-        });
-    }
+// ─── Render committee grid ────────────────────────────────────────────────────
+function renderCommitteeGrid() {
+  const grid = document.getElementById('committeeGrid');
+
+  if (!committeeMembers || committeeMembers.length === 0) {
+    grid.innerHTML = '<p style="color:#aaa;">No committee members found.</p>';
+    return;
+  }
+
+  grid.innerHTML = committeeMembers.map(m => `
+    <div class="committee-card">
+      <div class="committee-avatar">
+        <i class="fas fa-user-tie"></i>
+      </div>
+      <div class="committee-info">
+        <h4>${m.name}</h4>
+        <p>${m.email}</p>
+        <span class="status-indicator available">Available</span>
+      </div>
+    </div>
+  `).join('');
 }
 
-// Auto assign grievances
-function autoAssignGrievances() {
-    const strategy = document.getElementById('autoAssignStrategy').value;
-    const unassigned = grievances.filter(g => !g.assignedTo);
-    const available = committeeMembers.filter(m => m.status === 'available');
-    
-    if (unassigned.length === 0) {
-        showToast('No unassigned grievances', 'info');
-        closeModal('autoAssignModal');
-        return;
-    }
-    
-    if (available.length === 0) {
-        showToast('No available committee members', 'error');
-        closeModal('autoAssignModal');
-        return;
-    }
-    
-    // Simple auto-assignment logic
-    unassigned.forEach((grievance, index) => {
-        // Round-robin assignment
-        const committeeIndex = index % available.length;
-        const committee = available[committeeIndex];
-        
-        if (committee.currentLoad < committee.maxLoad) {
-            grievance.assignedTo = committee.name;
-            grievance.status = 'assigned';
-            committee.currentLoad++;
-            
-            if (committee.currentLoad >= committee.maxLoad) {
-                committee.status = 'busy';
-            }
-        }
-    });
-    
-    showToast(`Auto-assigned ${unassigned.length} grievances`, 'success');
-    closeModal('autoAssignModal');
-    
-    // Refresh data
-    updateStatistics();
-    loadGrievances();
-    loadCommitteeGrid();
-    
-    // Log the action
-    logAudit('Auto-assigned grievances', {
-        count: unassigned.length,
-        strategy: strategy
-    });
+// ─── Filters ──────────────────────────────────────────────────────────────────
+function applyFilters() {
+  const typeFilter   = document.getElementById('typeFilter').value;
+  const searchTerm   = (document.getElementById('searchInput').value || '').toLowerCase();
+
+  let list = allComplaints.filter(c => {
+    const status = (c.status || '').toLowerCase();
+    return status === 'pending' || status === 'submitted' || status === 'assigned';
+  });
+
+  if (typeFilter !== 'all') {
+    list = list.filter(c => (c.type || '').toLowerCase().includes(typeFilter.toLowerCase()));
+  }
+
+  if (searchTerm) {
+    list = list.filter(c =>
+      String(c.id).includes(searchTerm) ||
+      (c.type        || '').toLowerCase().includes(searchTerm) ||
+      (c.title       || '').toLowerCase().includes(searchTerm) ||
+      (c.description || '').toLowerCase().includes(searchTerm)
+    );
+  }
+
+  filteredComplaints = list;
+  renderComplaintsTable(filteredComplaints);
+  updateStatistics();
 }
 
-// Filter grievances
 function filterGrievances() {
-    loadGrievances();
+  applyFilters();
 }
 
-// Set default deadline (7 days from now)
-function setDefaultDeadline() {
-    const date = new Date();
-    date.setDate(date.getDate() + 7);
-    const deadline = date.toISOString().split('T')[0];
-    document.getElementById('assignmentDeadline').min = deadline;
-    document.getElementById('assignmentDeadline').value = deadline;
+// ─── Open assign modal ────────────────────────────────────────────────────────
+function openAssignModal(complaintId) {
+  const complaint = allComplaints.find(c => c.id === complaintId);
+  if (!complaint) return;
+
+  document.getElementById('assignGrievanceId').value = complaintId;
+
+  document.getElementById('grievanceInfo').innerHTML = `
+    <p><strong>Complaint #${complaint.id}:</strong> ${complaint.title || complaint.type || '–'}</p>
+    <p><strong>Type:</strong> ${complaint.type || '–'}</p>
+    <p><strong>Status:</strong> ${complaint.status || '–'}</p>
+    <p><strong>Description:</strong> ${(complaint.description || '').substring(0, 100)}${complaint.description && complaint.description.length > 100 ? '...' : ''}</p>
+  `;
+
+  // Populate committee dropdown
+  const select = document.getElementById('committeeSelect');
+  select.innerHTML = '<option value="">Choose a member...</option>' +
+    committeeMembers.map(m =>
+      `<option value="${m.id}">${m.name} — ${m.email}</option>`
+    ).join('');
+
+  document.getElementById('assignModal').classList.add('active');
 }
 
-// Format date
-function formatDate(dateString) {
-    const options = { year: 'numeric', month: 'short', day: 'numeric' };
-    return new Date(dateString).toLocaleDateString(undefined, options);
+// ─── Assign committee ─────────────────────────────────────────────────────────
+// POST /api/assignments  — body: { complaintId, committeeMemberId }
+async function assignCommittee(event) {
+  event.preventDefault();
+
+  const complaintIdRaw       = document.getElementById('assignGrievanceId').value;
+  const committeeMemberIdRaw = document.getElementById('committeeSelect').value;
+
+  if (!committeeMemberIdRaw || committeeMemberIdRaw === '') {
+    showToast('Please select a committee member', 'error');
+    return;
+  }
+  if (!complaintIdRaw || complaintIdRaw === '') {
+    showToast('No complaint selected', 'error');
+    return;
+  }
+
+  const complaintId       = Number(complaintIdRaw);
+  const committeeMemberId = Number(committeeMemberIdRaw);
+
+  if (isNaN(complaintId) || isNaN(committeeMemberId)) {
+    showToast('Invalid complaint or committee member ID', 'error');
+    return;
+  }
+
+  const submitBtn       = event.target.querySelector('.submit-btn');
+  submitBtn.textContent = 'Assigning...';
+  submitBtn.disabled    = true;
+
+  const notes    = document.getElementById('assignmentNotes').value.trim();
+  const priority = document.getElementById('assignmentPriority').value;
+  const deadline = document.getElementById('assignmentDeadline').value;
+
+
+  try {
+    // POST /api/assignments
+    // Body: { complaintId, committeeMemberId, notes, priority, deadline }
+    await apiCall('/assignments', 'POST', {
+      complaintId,
+      committeeMemberId,
+      notes:    notes    || null,
+      priority: priority || 'medium',
+      deadline: deadline || null
+    });
+
+    showToast('Grievance assigned successfully!', 'success');
+    closeModal('assignModal');
+
+    // Refresh data
+    await fetchComplaints();
+    updateStatistics();
+
+  } catch (err) {
+    showToast(err.message || 'Failed to assign grievance', 'error');
+  } finally {
+    submitBtn.textContent = 'Assign Grievance';
+    submitBtn.disabled    = false;
+  }
 }
 
-// Show auto assign modal
-function showAutoAssignModal() {
-    document.getElementById('autoAssignModal').classList.add('active');
-}
+// ─── Auto assign ──────────────────────────────────────────────────────────────
+// Round-robin: assign each unassigned complaint to committee members in turn
+async function autoAssignGrievances() {
+  const unassigned = allComplaints.filter(c => {
+    const s = (c.status || '').toLowerCase();
+    return s === 'pending' || s === 'submitted';
+  });
 
-// Close modal
-function closeModal(modalId) {
-    document.getElementById(modalId).classList.remove('active');
-}
+  if (unassigned.length === 0) {
+    showToast('No unassigned grievances found', 'info');
+    closeModal('autoAssignModal');
+    return;
+  }
 
-// Show toast
-function showToast(message, type = 'info') {
-    const toast = document.getElementById('toast');
-    let icon = '';
-    
-    switch(type) {
-        case 'success':
-            icon = '<i class="fas fa-check-circle"></i>';
-            break;
-        case 'error':
-            icon = '<i class="fas fa-exclamation-circle"></i>';
-            break;
-        default:
-            icon = '<i class="fas fa-info-circle"></i>';
+  if (committeeMembers.length === 0) {
+    showToast('No committee members available', 'error');
+    closeModal('autoAssignModal');
+    return;
+  }
+
+  const submitBtn       = document.querySelector('#autoAssignModal .submit-btn');
+  submitBtn.textContent = 'Assigning...';
+  submitBtn.disabled    = true;
+
+  let successCount = 0;
+  let failCount    = 0;
+
+  for (let i = 0; i < unassigned.length; i++) {
+    const complaint       = unassigned[i];
+    const member          = committeeMembers[i % committeeMembers.length];
+    try {
+      await apiCall('/assignments', 'POST', {
+        complaintId:       complaint.id,
+        committeeMemberId: member.id
+      });
+      successCount++;
+    } catch (err) {
+      // Already assigned or other error — skip
+      failCount++;
     }
-    
-    toast.className = `toast ${type}`;
-    toast.innerHTML = `${icon} ${message}`;
-    toast.style.display = 'flex';
-    
-    setTimeout(() => {
-        toast.style.display = 'none';
-    }, 3000);
+  }
+
+  showToast(
+    `Auto-assigned ${successCount} grievance(s)${failCount > 0 ? `, ${failCount} skipped` : ''}`,
+    successCount > 0 ? 'success' : 'info'
+  );
+
+  closeModal('autoAssignModal');
+  submitBtn.textContent = 'Proceed with Auto-Assign';
+  submitBtn.disabled    = false;
+
+  await fetchComplaints();
+  updateStatistics();
 }
 
-// Log audit
-function logAudit(action, details) {
-    const auditEntry = {
-        timestamp: new Date().toISOString(),
-        admin: 'Michael Brown',
-        action: action,
-        details: details,
-        module: 'assign-committee'
-    };
-    
-    console.log('Audit Log:', auditEntry);
-    
-    const auditLogs = JSON.parse(localStorage.getItem('auditLogs') || '[]');
-    auditLogs.push(auditEntry);
-    localStorage.setItem('auditLogs', JSON.stringify(auditLogs));
+function showAutoAssignModal() {
+  document.getElementById('autoAssignModal').classList.add('active');
 }
 
-// Make functions globally available
-window.filterGrievances = filterGrievances;
-window.openAssignModal = openAssignModal;
-window.assignCommittee = assignCommittee;
-window.showAutoAssignModal = showAutoAssignModal;
-window.autoAssignGrievances = autoAssignGrievances;
-window.closeModal = closeModal;
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+function setDefaultDeadline() {
+  const date = new Date();
+  date.setDate(date.getDate() + 7);
+  const val = date.toISOString().split('T')[0];
+  const el  = document.getElementById('assignmentDeadline');
+  if (el) { el.min = val; el.value = val; }
+}
+
+function formatDate(dateStr) {
+  if (!dateStr) return '–';
+  return new Date(dateStr).toLocaleDateString(undefined, {
+    year: 'numeric', month: 'short', day: 'numeric'
+  });
+}
+
+function closeModal(modalId) {
+  document.getElementById(modalId).classList.remove('active');
+}
+
+function showToast(message, type = 'info') {
+  const toast = document.getElementById('toast');
+  const icons = { success: 'fa-check-circle', error: 'fa-exclamation-circle', info: 'fa-info-circle' };
+  toast.className     = `toast ${type}`;
+  toast.innerHTML     = `<i class="fas ${icons[type] || icons.info}"></i> ${message}`;
+  toast.style.display = 'flex';
+  setTimeout(() => { toast.style.display = 'none'; }, 3000);
+}
+
+// ─── Expose globals ───────────────────────────────────────────────────────────
+window.filterGrievances      = filterGrievances;
+window.openAssignModal        = openAssignModal;
+window.assignCommittee        = assignCommittee;
+window.showAutoAssignModal    = showAutoAssignModal;
+window.autoAssignGrievances   = autoAssignGrievances;
+window.closeModal             = closeModal;

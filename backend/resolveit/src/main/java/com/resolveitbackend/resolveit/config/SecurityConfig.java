@@ -72,6 +72,8 @@ public class SecurityConfig {
                         .requestMatchers("/api/feedback/**").authenticated()
 
                         // Assignments
+                        .requestMatchers(HttpMethod.GET, "/api/assignments/committee/**")
+                        .hasAnyRole("ADMIN", "COMMITTEE")
                         .requestMatchers("/api/assignments/**")
                         .hasRole("ADMIN")
 

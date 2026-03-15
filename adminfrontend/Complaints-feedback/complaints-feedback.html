@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Complaints & Feedback - Admin</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="complaints-feedback.css">
+</head>
+<body>
+    <div class="module-container">
+        <div class="module-header">
+            <h2><i class="fas fa-comments"></i> Complaints & Feedback</h2>
+            <div class="header-stats">
+                <div class="stat-pill">
+                    <i class="fas fa-file-alt"></i>
+                    <span id="totalComplaints">0</span> Complaints
+                </div>
+                <div class="stat-pill feedback">
+                    <i class="fas fa-star"></i>
+                    <span id="totalFeedback">0</span> Feedbacks
+                </div>
+            </div>
+        </div>
+
+        <!-- Filters -->
+        <div class="filter-bar">
+            <div class="filter-group">
+                <label>Status:</label>
+                <select id="statusFilter" onchange="applyFilters()">
+                    <option value="all">All Statuses</option>
+                    <option value="PENDING">Pending</option>
+                    <option value="ASSIGNED">Assigned</option>
+                    <option value="UNDER_REVIEW">Under Review</option>
+                    <option value="RESOLVED">Resolved</option>
+                    <option value="ESCALATED">Escalated</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label>Type:</label>
+                <select id="typeFilter" onchange="applyFilters()">
+                    <option value="all">All Types</option>
+                    <option value="Verbal">Verbal Harassment</option>
+                    <option value="Physical">Physical Harassment</option>
+                    <option value="Cyber">Cyber Harassment</option>
+                    <option value="Discrimination">Discrimination</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label>Feedback:</label>
+                <select id="feedbackFilter" onchange="applyFilters()">
+                    <option value="all">All</option>
+                    <option value="with">With Feedback</option>
+                    <option value="without">Without Feedback</option>
+                </select>
+            </div>
+            <div class="search-box">
+                <i class="fas fa-search"></i>
+                <input type="text" id="searchInput" placeholder="Search by ID, type, description..." onkeyup="applyFilters()">
+            </div>
+        </div>
+
+        <!-- Complaints Table -->
+        <div class="table-container">
+            <table id="complaintsTable">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>User</th>
+                        <th>Title</th>
+                        <th>Type</th>
+                        <th>Status</th>
+                        <th>Filed On</th>
+                        <th>Feedback</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="complaintsTableBody">
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Complaint Detail Modal -->
+    <div class="modal" id="detailModal">
+        <div class="modal-content wide">
+            <div class="modal-header">
+                <h3><i class="fas fa-file-alt"></i> Complaint Details</h3>
+                <button class="close-btn" onclick="closeModal('detailModal')">&times;</button>
+            </div>
+            <div id="complaintDetail"></div>
+            <div class="feedback-section" id="feedbackSection">
+                <h4><i class="fas fa-star"></i> Feedback</h4>
+                <div id="feedbackContent"></div>
+            </div>
+        </div>
+    </div>
+
+    <div id="toast" class="toast"></div>
+    <script src="../js/api.js"></script>
+    <script src="complaints-feedback.js"></script>
+</body>
+</html>

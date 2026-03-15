@@ -9,4 +9,5 @@ public interface AssignmentRepository extends JpaRepository<Assignment, Long> {
     List<Assignment> findByCommitteeMemberId(Long committeeMemberId);
     Optional<Assignment> findByComplaintId(Long complaintId);
     boolean existsByComplaintIdAndCommitteeMemberId(Long complaintId, Long committeeMemberId);
+    List<Assignment> findAllByComplaintId(Long complaintId);
 }

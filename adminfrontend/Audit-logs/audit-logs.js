@@ -1,404 +1,350 @@
-// Sample audit logs data
-let auditLogs = [
-    {
-        id: 1,
-        timestamp: '2024-01-15T10:30:00',
-        user: 'Michael Brown',
-        userType: 'admin',
-        action: 'login',
-        actionType: 'login',
-        details: 'Admin logged in successfully',
-        ip: '192.168.1.100',
-        status: 'success',
-        metadata: {
-            browser: 'Chrome 120',
-            os: 'Windows 11',
-            location: 'New York, USA'
-        }
-    },
-    {
-        id: 2,
-        timestamp: '2024-01-15T09:45:00',
-        user: 'Sarah Johnson',
-        userType: 'committee',
-        action: 'update',
-        actionType: 'update',
-        details: 'Updated grievance status GRV002 to "investigating"',
-        ip: '192.168.1.101',
-        status: 'success'
-    },
-    {
-        id: 3,
-        timestamp: '2024-01-15T09:30:00',
-        user: 'System',
-        userType: 'system',
-        action: 'escalate',
-        actionType: 'escalate',
-        details: 'Automatic escalation triggered for GRV005 (48h no response)',
-        ip: 'system',
-        status: 'warning'
-    },
-    {
-        id: 4,
-        timestamp: '2024-01-15T08:15:00',
-        user: 'Alice Smith',
-        userType: 'victim',
-        action: 'create',
-        actionType: 'create',
-        details: 'Filed new grievance GRV008',
-        ip: '192.168.1.102',
-        status: 'success'
-    },
-    {
-        id: 5,
-        timestamp: '2024-01-14T23:20:00',
-        user: 'Unknown',
-        userType: 'unknown',
-        action: 'login',
-        actionType: 'login',
-        details: 'Failed login attempt for user admin@example.com',
-        ip: '45.67.89.123',
-        status: 'failed'
-    }
-];
+// audit-logs.js – wired to Spring Boot /api/admin/audit-logs
 
-let currentPage = 1;
-const logsPerPage = 10;
-let filteredLogs = [...auditLogs];
+// State
+let allLogs       = [];   // full current page from server
+let filteredLogs  = [];   // client-side filtered subset
+let currentPage   = 0;    // 0-based (Spring pagination)
+let totalPages    = 1;
+let totalElements = 0;
+const PAGE_SIZE   = 10;
 
-// Initialize page
-document.addEventListener('DOMContentLoaded', function() {
-    updateStatistics();
-    renderLogs();
+// Active filter state
+let activeFilters = {
+  dateRange:  'week',
+  actionType: 'all',
+  startDate:  null,
+  endDate:    null,
+  search:     ''
+};
+
+// ─── Init ────────────────────────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+  fetchLogs();
 });
 
-// Update statistics
-function updateStatistics() {
-    document.getElementById('totalEvents').textContent = auditLogs.length;
-    document.getElementById('successCount').textContent = auditLogs.filter(l => l.status === 'success').length;
-    document.getElementById('failedCount').textContent = auditLogs.filter(l => l.status === 'failed').length;
-    document.getElementById('warningCount').textContent = auditLogs.filter(l => l.status === 'warning').length;
-}
+// ─── Fetch from backend ───────────────────────────────────────────────────────
+async function fetchLogs() {
+  showTableLoading();
 
-// Render logs table
-function renderLogs() {
-    const tbody = document.getElementById('logsTableBody');
-    const start = (currentPage - 1) * logsPerPage;
-    const end = start + logsPerPage;
-    const pageLogs = filteredLogs.slice(start, end);
-    
-    if (pageLogs.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 30px;">No logs found</td></tr>';
-        return;
-    }
-    
-    tbody.innerHTML = pageLogs.map(log => `
-        <tr onclick="viewLogDetails('${log.id}')" style="cursor: pointer;">
-            <td>${formatTimestamp(log.timestamp)}</td>
-            <td>${log.user}</td>
-            <td><span class="user-badge ${log.userType}">${log.userType.toUpperCase()}</span></td>
-            <td>${log.action}</td>
-            <td>${log.details}</td>
-            <td>${log.ip}</td>
-            <td><span class="status-badge ${log.status}">${log.status.toUpperCase()}</span></td>
-        </tr>
-    `).join('');
-    
+  // Build query params
+  const params = new URLSearchParams();
+  params.set('page', currentPage);
+  params.set('size', PAGE_SIZE);
+
+  // Date range → startDate param
+  const { start, end } = resolveDateRange();
+  if (start) params.set('startDate', start.toISOString());
+  if (end)   params.set('endDate',   end.toISOString());
+
+  // Action filter
+  if (activeFilters.actionType !== 'all') {
+    params.set('action', activeFilters.actionType.toUpperCase());
+  }
+
+  try {
+    const data = await apiCall(`/admin/audit-logs?${params.toString()}`);
+
+    // data: { content, totalElements, totalPages, currentPage }
+    allLogs       = data.content       || [];
+    totalElements = data.totalElements || 0;
+    totalPages    = data.totalPages    || 1;
+
+    // Client-side search filter on top
+    applySearchFilter();
+    updateStatistics(data);
+    renderLogs();
     renderPagination();
+
+  } catch (err) {
+    document.getElementById('logsTableBody').innerHTML =
+      `<tr><td colspan="7" style="text-align:center;color:#e74c3c;padding:30px;">
+         Failed to load logs: ${err.message}
+       </td></tr>`;
+    showToast('Failed to load audit logs', 'error');
+  }
 }
 
-// Render pagination
-function renderPagination() {
-    const totalPages = Math.ceil(filteredLogs.length / logsPerPage);
-    const pagination = document.getElementById('pagination');
-    
-    let html = '<button onclick="changePage(1)" ' + (currentPage === 1 ? 'disabled' : '') + '><i class="fas fa-angle-double-left"></i></button>';
-    html += '<button onclick="changePage(' + (currentPage - 1) + ')" ' + (currentPage === 1 ? 'disabled' : '') + '><i class="fas fa-angle-left"></i></button>';
-    
-    for (let i = 1; i <= totalPages; i++) {
-        if (i === currentPage) {
-            html += `<button class="active">${i}</button>`;
-        } else if (i === 1 || i === totalPages || (i >= currentPage - 2 && i <= currentPage + 2)) {
-            html += `<button onclick="changePage(${i})">${i}</button>`;
-        } else if (i === currentPage - 3 || i === currentPage + 3) {
-            html += `<button disabled>...</button>`;
-        }
-    }
-    
-    html += '<button onclick="changePage(' + (currentPage + 1) + ')" ' + (currentPage === totalPages ? 'disabled' : '') + '><i class="fas fa-angle-right"></i></button>';
-    html += '<button onclick="changePage(' + totalPages + ')" ' + (currentPage === totalPages ? 'disabled' : '') + '><i class="fas fa-angle-double-right"></i></button>';
-    
-    pagination.innerHTML = html;
+// ─── Apply client-side search on top of server results ───────────────────────
+function applySearchFilter() {
+  const term = activeFilters.search.toLowerCase();
+  if (!term) {
+    filteredLogs = [...allLogs];
+    return;
+  }
+  filteredLogs = allLogs.filter(log =>
+    (log.action      || '').toLowerCase().includes(term) ||
+    (log.details     || '').toLowerCase().includes(term) ||
+    String(log.performedBy || '').includes(term)
+  );
 }
 
-// Change page
-function changePage(page) {
-    if (page < 1 || page > Math.ceil(filteredLogs.length / logsPerPage)) return;
-    currentPage = page;
-    renderLogs();
-}
+// ─── Render table ─────────────────────────────────────────────────────────────
+function renderLogs() {
+  const tbody = document.getElementById('logsTableBody');
 
-// Apply filters
-function applyFilters() {
-    const dateRange = document.getElementById('dateRange').value;
-    const userType = document.getElementById('userType').value;
-    const actionType = document.getElementById('actionType').value;
-    const status = document.getElementById('status').value;
-    
-    // Show/hide custom date range
-    document.getElementById('customDateRow').style.display = dateRange === 'custom' ? 'flex' : 'none';
-    
-    if (dateRange === 'custom') return;
-    
-    // Apply filters
-    filteredLogs = auditLogs.filter(log => {
-        // Date filter
-        if (dateRange !== 'all') {
-            const logDate = new Date(log.timestamp);
-            const now = new Date();
-            const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-            
-            switch(dateRange) {
-                case 'today':
-                    if (logDate < today) return false;
-                    break;
-                case 'yesterday':
-                    const yesterday = new Date(today);
-                    yesterday.setDate(yesterday.getDate() - 1);
-                    if (logDate < yesterday || logDate >= today) return false;
-                    break;
-                case 'week':
-                    const weekAgo = new Date(now.setDate(now.getDate() - 7));
-                    if (logDate < weekAgo) return false;
-                    break;
-                case 'month':
-                    const monthAgo = new Date(now.setMonth(now.getMonth() - 1));
-                    if (logDate < monthAgo) return false;
-                    break;
-            }
-        }
-        
-        // User type filter
-        if (userType !== 'all' && log.userType !== userType) return false;
-        
-        // Action type filter
-        if (actionType !== 'all' && log.actionType !== actionType) return false;
-        
-        // Status filter
-        if (status !== 'all' && log.status !== status) return false;
-        
-        return true;
-    });
-    
-    currentPage = 1;
-    updateStatistics();
-    renderLogs();
-}
+  if (filteredLogs.length === 0) {
+    tbody.innerHTML =
+      '<tr><td colspan="7" style="text-align:center;padding:30px;color:#aaa;">No logs found</td></tr>';
+    return;
+  }
 
-// Apply custom date range
-function applyCustomDate() {
-    const start = new Date(document.getElementById('startDate').value);
-    const end = new Date(document.getElementById('endDate').value);
-    
-    filteredLogs = auditLogs.filter(log => {
-        const logDate = new Date(log.timestamp);
-        return logDate >= start && logDate <= end;
-    });
-    
-    currentPage = 1;
-    updateStatistics();
-    renderLogs();
-}
-
-// Search logs
-function searchLogs() {
-    const searchTerm = event.target.value.toLowerCase();
-    
-    filteredLogs = auditLogs.filter(log => 
-        log.user.toLowerCase().includes(searchTerm) ||
-        log.details.toLowerCase().includes(searchTerm) ||
-        log.action.toLowerCase().includes(searchTerm) ||
-        log.ip.includes(searchTerm)
-    );
-    
-    currentPage = 1;
-    renderLogs();
-}
-
-// Clear filters
-function clearFilters() {
-    document.getElementById('dateRange').value = 'week';
-    document.getElementById('userType').value = 'all';
-    document.getElementById('actionType').value = 'all';
-    document.getElementById('status').value = 'all';
-    document.getElementById('customDateRow').style.display = 'none';
-    
-    filteredLogs = [...auditLogs];
-    currentPage = 1;
-    updateStatistics();
-    renderLogs();
-    
-    showToast('Filters cleared', 'info');
-}
-
-// View log details
-function viewLogDetails(logId) {
-    const log = auditLogs.find(l => l.id == logId);
-    if (!log) return;
-    
-    const detailsDiv = document.getElementById('logDetails');
-    detailsDiv.innerHTML = `
-        <div class="detail-group">
-            <label>Log ID:</label>
-            <span>${log.id}</span>
-        </div>
-        <div class="detail-group">
-            <label>Timestamp:</label>
-            <span>${new Date(log.timestamp).toLocaleString()}</span>
-        </div>
-        <div class="detail-group">
-            <label>User:</label>
-            <span>${log.user} (${log.userType})</span>
-        </div>
-        <div class="detail-group">
-            <label>Action:</label>
-            <span>${log.action}</span>
-        </div>
-        <div class="detail-group">
-            <label>Details:</label>
-            <span>${log.details}</span>
-        </div>
-        <div class="detail-group">
-            <label>IP Address:</label>
-            <span>${log.ip}</span>
-        </div>
-        <div class="detail-group">
-            <label>Status:</label>
-            <span class="status-badge ${log.status}">${log.status}</span>
-        </div>
-        ${log.metadata ? `
-            <h4 style="margin-top: 15px;">Additional Information</h4>
-            <div class="detail-group">
-                <label>Browser:</label>
-                <span>${log.metadata.browser || 'N/A'}</span>
-            </div>
-            <div class="detail-group">
-                <label>OS:</label>
-                <span>${log.metadata.os || 'N/A'}</span>
-            </div>
-            <div class="detail-group">
-                <label>Location:</label>
-                <span>${log.metadata.location || 'N/A'}</span>
-            </div>
-        ` : ''}
+  tbody.innerHTML = filteredLogs.map(log => {
+    const actionCategory = categorizeAction(log.action);
+    const details        = parseDetails(log.details);
+    return `
+      <tr onclick="viewLogDetails(${log.id})" style="cursor:pointer;">
+        <td>${formatTimestamp(log.timestamp)}</td>
+        <td>${log.performedBy ? 'User #' + log.performedBy : 'System'}</td>
+        <td><span class="user-badge ${getUserType(log)}">${getUserType(log).toUpperCase()}</span></td>
+        <td>${log.action || '–'}</td>
+        <td>${details}</td>
+        <td>–</td>
+        <td><span class="status-badge success">SUCCESS</span></td>
+      </tr>
     `;
-    
+  }).join('');
+}
+
+// ─── Statistics bar ───────────────────────────────────────────────────────────
+function updateStatistics(data) {
+  document.getElementById('totalEvents').textContent  = data.totalElements || 0;
+  // Backend doesn't have status field — show total only, zero others
+  document.getElementById('successCount').textContent = data.totalElements || 0;
+  document.getElementById('failedCount').textContent  = 0;
+  document.getElementById('warningCount').textContent = 0;
+}
+
+// ─── Pagination ───────────────────────────────────────────────────────────────
+function renderPagination() {
+  const pagination = document.getElementById('pagination');
+  const tp = totalPages;
+  const cp = currentPage; // 0-based
+
+  if (tp <= 1) { pagination.innerHTML = ''; return; }
+
+  let html = '';
+  html += `<button onclick="changePage(0)" ${cp===0?'disabled':''}><i class="fas fa-angle-double-left"></i></button>`;
+  html += `<button onclick="changePage(${cp-1})" ${cp===0?'disabled':''}><i class="fas fa-angle-left"></i></button>`;
+
+  for (let i = 0; i < tp; i++) {
+    if (i === cp) {
+      html += `<button class="active">${i+1}</button>`;
+    } else if (i === 0 || i === tp-1 || (i >= cp-2 && i <= cp+2)) {
+      html += `<button onclick="changePage(${i})">${i+1}</button>`;
+    } else if (i === cp-3 || i === cp+3) {
+      html += `<button disabled>...</button>`;
+    }
+  }
+
+  html += `<button onclick="changePage(${cp+1})" ${cp===tp-1?'disabled':''}><i class="fas fa-angle-right"></i></button>`;
+  html += `<button onclick="changePage(${tp-1})" ${cp===tp-1?'disabled':''}><i class="fas fa-angle-double-right"></i></button>`;
+
+  pagination.innerHTML = html;
+}
+
+function changePage(page) {
+  if (page < 0 || page >= totalPages) return;
+  currentPage = page;
+  fetchLogs();
+}
+
+// ─── Filters ──────────────────────────────────────────────────────────────────
+function applyFilters() {
+  activeFilters.dateRange  = document.getElementById('dateRange').value;
+  activeFilters.actionType = document.getElementById('actionType').value;
+
+  const customRow = document.getElementById('customDateRow');
+  customRow.style.display = activeFilters.dateRange === 'custom' ? 'flex' : 'none';
+
+  if (activeFilters.dateRange === 'custom') return; // wait for Apply
+
+  currentPage = 0;
+  fetchLogs();
+}
+
+function applyCustomDate() {
+  const s = document.getElementById('startDate').value;
+  const e = document.getElementById('endDate').value;
+  if (!s || !e) { showToast('Please select both dates', 'error'); return; }
+  activeFilters.startDate = new Date(s);
+  activeFilters.endDate   = new Date(e);
+  currentPage = 0;
+  fetchLogs();
+}
+
+function clearFilters() {
+  document.getElementById('dateRange').value  = 'week';
+  document.getElementById('actionType').value = 'all';
+  document.getElementById('status').value     = 'all';
+  document.getElementById('userType').value   = 'all';
+  document.getElementById('customDateRow').style.display = 'none';
+  document.querySelector('.search-box input').value = '';
+
+  activeFilters = { dateRange: 'week', actionType: 'all', startDate: null, endDate: null, search: '' };
+  currentPage = 0;
+  fetchLogs();
+  showToast('Filters cleared', 'info');
+}
+
+function searchLogs() {
+  activeFilters.search = event.target.value;
+  applySearchFilter();
+  renderLogs();
+}
+
+// ─── View log details modal ───────────────────────────────────────────────────
+async function viewLogDetails(logId) {
+  try {
+    const log = await apiCall(`/admin/audit-logs/${logId}`);
+    const details = parseDetails(log.details);
+
+    document.getElementById('logDetails').innerHTML = `
+      <div class="detail-group">
+        <label>Log ID:</label>
+        <span>${log.id}</span>
+      </div>
+      <div class="detail-group">
+        <label>Timestamp:</label>
+        <span>${log.timestamp ? new Date(log.timestamp).toLocaleString() : '–'}</span>
+      </div>
+      <div class="detail-group">
+        <label>Performed By:</label>
+        <span>${log.performedBy ? 'User #' + log.performedBy : 'System'}</span>
+      </div>
+      <div class="detail-group">
+        <label>Action:</label>
+        <span>${log.action || '–'}</span>
+      </div>
+      <div class="detail-group">
+        <label>Details:</label>
+        <span>${details}</span>
+      </div>
+    `;
+
     document.getElementById('logModal').classList.add('active');
+  } catch (err) {
+    showToast('Failed to load log details', 'error');
+  }
 }
 
-// Export logs
+// ─── Export ───────────────────────────────────────────────────────────────────
 function exportLogs() {
-    const format = confirm('Export as CSV? Click OK for CSV, Cancel for JSON') ? 'csv' : 'json';
-    
-    if (format === 'csv') {
-        // Convert to CSV
-        const headers = ['Timestamp', 'User', 'User Type', 'Action', 'Details', 'IP', 'Status'];
-        const csvData = filteredLogs.map(log => [
-            log.timestamp,
-            log.user,
-            log.userType,
-            log.action,
-            log.details,
-            log.ip,
-            log.status
-        ]);
-        
-        const csv = [headers, ...csvData].map(row => row.join(',')).join('\n');
-        downloadFile(csv, 'audit-logs.csv', 'text/csv');
-    } else {
-        // Export as JSON
-        const json = JSON.stringify(filteredLogs, null, 2);
-        downloadFile(json, 'audit-logs.json', 'application/json');
-    }
-    
-    showToast(`Exported ${filteredLogs.length} logs`, 'success');
+  const format = confirm('Export as CSV? Click OK for CSV, Cancel for JSON') ? 'csv' : 'json';
+
+  if (format === 'csv') {
+    const headers = ['ID', 'Timestamp', 'Performed By', 'Action', 'Details'];
+    const rows    = filteredLogs.map(l => [
+      l.id,
+      l.timestamp || '',
+      l.performedBy || 'System',
+      l.action || '',
+      (parseDetails(l.details) || '').replace(/,/g, ';')
+    ]);
+    const csv = [headers, ...rows].map(r => r.join(',')).join('\n');
+    downloadFile(csv, 'audit-logs.csv', 'text/csv');
+  } else {
+    downloadFile(JSON.stringify(filteredLogs, null, 2), 'audit-logs.json', 'application/json');
+  }
+  showToast(`Exported ${filteredLogs.length} logs`, 'success');
 }
 
-// Download file
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+
+// Resolve date range filter to { start, end } Date objects
+function resolveDateRange() {
+  const range = activeFilters.dateRange;
+  if (range === 'custom') {
+    return { start: activeFilters.startDate, end: activeFilters.endDate };
+  }
+  const now   = new Date();
+  const start = new Date(now);
+  switch (range) {
+    case 'today':     start.setHours(0,0,0,0);                    break;
+    case 'yesterday': start.setDate(start.getDate()-1); start.setHours(0,0,0,0); break;
+    case 'week':      start.setDate(start.getDate()-7);            break;
+    case 'month':     start.setDate(start.getDate()-30);           break;
+    default:          return { start: null, end: null };
+  }
+  return { start, end: now };
+}
+
+// Map action string → user type badge
+function getUserType(log) {
+  const action = (log.action || '').toUpperCase();
+  if (action.includes('REGISTER') || action.includes('COMPLAINT') || action.includes('FEEDBACK'))
+    return 'victim';
+  if (action.includes('ASSIGN') || action.includes('STATUS') || action.includes('ESCALAT'))
+    return 'committee';
+  if (!log.performedBy)
+    return 'system';
+  return 'admin';
+}
+
+// Categorize action string for display
+function categorizeAction(action) {
+  return (action || '–').replace(/_/g, ' ');
+}
+
+// Parse details JSON string to readable text
+function parseDetails(details) {
+  if (!details) return '–';
+  try {
+    const obj = JSON.parse(details);
+    return obj.message || JSON.stringify(obj);
+  } catch {
+    return details;
+  }
+}
+
+function formatTimestamp(ts) {
+  if (!ts) return '–';
+  const date = new Date(ts);
+  const diff  = Date.now() - date.getTime();
+  if (diff < 3600000)  return `${Math.floor(diff/60000)} mins ago`;
+  if (diff < 86400000) return `${Math.floor(diff/3600000)} hrs ago`;
+  return date.toLocaleString();
+}
+
+function showTableLoading() {
+  document.getElementById('logsTableBody').innerHTML =
+    `<tr><td colspan="7" style="text-align:center;padding:30px;color:#aaa;">
+       <i class="fas fa-spinner fa-spin"></i> Loading...
+     </td></tr>`;
+}
+
 function downloadFile(content, fileName, contentType) {
-    const blob = new Blob([content], { type: contentType });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = fileName;
-    a.click();
-    URL.revokeObjectURL(url);
+  const blob = new Blob([content], { type: contentType });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href = url; a.download = fileName; a.click();
+  URL.revokeObjectURL(url);
 }
 
-// Format timestamp
-function formatTimestamp(timestamp) {
-    const date = new Date(timestamp);
-    const now = new Date();
-    const diff = now - date;
-    
-    // Less than 24 hours
-    if (diff < 24 * 60 * 60 * 1000) {
-        const hours = Math.floor(diff / (60 * 60 * 1000));
-        const minutes = Math.floor((diff % (60 * 60 * 1000)) / (60 * 1000));
-        
-        if (hours === 0) {
-            return `${minutes} minutes ago`;
-        } else {
-            return `${hours} hours ago`;
-        }
-    }
-    
-    return date.toLocaleString();
-}
-
-// Close modal
 function closeModal(modalId) {
-    document.getElementById(modalId).classList.remove('active');
+  document.getElementById(modalId).classList.remove('active');
 }
 
-// Show toast
 function showToast(message, type = 'info') {
-    // Create toast element if it doesn't exist
-    let toast = document.getElementById('toast');
-    if (!toast) {
-        toast = document.createElement('div');
-        toast.id = 'toast';
-        toast.className = 'toast';
-        document.body.appendChild(toast);
-    }
-    
-    let icon = '';
-    switch(type) {
-        case 'success':
-            icon = '<i class="fas fa-check-circle"></i>';
-            break;
-        case 'error':
-            icon = '<i class="fas fa-exclamation-circle"></i>';
-            break;
-        default:
-            icon = '<i class="fas fa-info-circle"></i>';
-    }
-    
-    toast.className = `toast ${type}`;
-    toast.innerHTML = `${icon} ${message}`;
-    toast.style.display = 'flex';
-    
-    setTimeout(() => {
-        toast.style.display = 'none';
-    }, 3000);
+  let toast = document.getElementById('toast');
+  if (!toast) {
+    toast = document.createElement('div');
+    toast.id = 'toast';
+    toast.className = 'toast';
+    document.body.appendChild(toast);
+  }
+  const icons = { success: 'fa-check-circle', error: 'fa-exclamation-circle', info: 'fa-info-circle' };
+  toast.className     = `toast ${type}`;
+  toast.innerHTML     = `<i class="fas ${icons[type]||icons.info}"></i> ${message}`;
+  toast.style.display = 'flex';
+  setTimeout(() => { toast.style.display = 'none'; }, 3000);
 }
 
-// Make functions globally available
-window.applyFilters = applyFilters;
+// ─── Expose globals ───────────────────────────────────────────────────────────
+window.applyFilters    = applyFilters;
 window.applyCustomDate = applyCustomDate;
-window.searchLogs = searchLogs;
-window.clearFilters = clearFilters;
-window.viewLogDetails = viewLogDetails;
-window.exportLogs = exportLogs;
-window.changePage = changePage;
-window.closeModal = closeModal;
+window.searchLogs      = searchLogs;
+window.clearFilters    = clearFilters;
+window.viewLogDetails  = viewLogDetails;
+window.exportLogs      = exportLogs;
+window.changePage      = changePage;
+window.closeModal      = closeModal;

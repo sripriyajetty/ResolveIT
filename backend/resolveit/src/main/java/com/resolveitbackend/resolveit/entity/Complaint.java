@@ -47,6 +47,6 @@ public class Complaint {
 
     @PrePersist
     protected void onCreate() {
-        if (status == null) status = "pending";   // ← default status
+        if (status == null) status = "PENDING";   // ← default status
     }
 }

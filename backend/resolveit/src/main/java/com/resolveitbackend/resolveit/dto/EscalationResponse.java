@@ -11,7 +11,7 @@ public class EscalationResponse {
     private String reason;
     private Long escalatedBy;
     private String escalatedByName;     // optional
-    private Long escalatedTo;
+    private String escalatedTo;
     private String escalatedToName;     // optional
     private LocalDateTime escalatedAt;
 }

@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,6 +8,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link rel="stylesheet" href="manage-users.css">
 </head>
+
 <body>
     <div class="module-container">
         <div class="module-header">
@@ -27,7 +29,8 @@
         <!-- Search Bar -->
         <div class="search-bar">
             <i class="fas fa-search"></i>
-            <input type="text" id="searchInput" placeholder="Search users by name, email, or role..." onkeyup="searchUsers()">
+            <input type="text" id="searchInput" placeholder="Search users by name, email, or role..."
+                onkeyup="searchUsers()">
         </div>
 
         <!-- Users Table -->
@@ -51,6 +54,7 @@
     </div>
 
     <!-- Add Committee Member Modal -->
+    <!-- Add Committee Member Modal -->
     <div class="modal" id="addCommitteeModal">
         <div class="modal-content">
             <div class="modal-header">
@@ -68,36 +72,25 @@
                 </div>
                 <div class="form-group">
                     <label>Password</label>
-                    <input type="password" id="memberPassword" required placeholder="Enter password">
+                    <div class="password-input-wrapper">
+                        <input type="password" id="memberPassword" required placeholder="Enter password">
+                        <button type="button" class="show-password-btn" onclick="togglePassword('memberPassword', this)"
+                            title="Show password">👁️</button>
+                    </div>
                 </div>
                 <div class="form-group">
                     <label>Confirm Password</label>
-                    <input type="password" id="memberConfirmPassword" required placeholder="Confirm password">
+                    <div class="password-input-wrapper">
+                        <input type="password" id="memberConfirmPassword" required placeholder="Confirm password">
+                        <button type="button" class="show-password-btn"
+                            onclick="togglePassword('memberConfirmPassword', this)" title="Show password">👁️</button>
+                    </div>
                 </div>
-                <div class="form-group">
-                    <label>Department/Committee</label>
-                    <select id="memberDepartment" required>
-                        <option value="">Select Department</option>
-                        <option value="HR">HR Committee</option>
-                        <option value="Legal">Legal Committee</option>
-                        <option value="Disciplinary">Disciplinary Committee</option>
-                        <option value="Women Welfare">Women Welfare Committee</option>
-                        <option value="Grievance">Grievance Redressal Committee</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label>Designation</label>
-                    <input type="text" id="memberDesignation" required placeholder="Enter designation">
-                </div>
-                <div class="form-group">
-                    <label>Contact Number</label>
-                    <input type="tel" id="memberContact" required placeholder="Enter contact number">
-                </div>
+                <div id="addMemberError" style="color:#e74c3c;font-size:0.9rem;margin-bottom:12px;display:none;"></div>
                 <button type="submit" class="submit-btn">Add Committee Member</button>
             </form>
         </div>
     </div>
-
     <!-- Edit User Modal -->
     <div class="modal" id="editUserModal">
         <div class="modal-content">
@@ -140,4 +133,5 @@
     <script src="../js/api.js"></script>
     <script src="manage-users.js"></script>
 </body>
+
 </html>

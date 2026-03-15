@@ -20,11 +20,30 @@ async function apiCall(endpoint, method = "GET", body = null) {
     if (body) options.body = JSON.stringify(body);
 
     const response = await fetch(`${BASE_URL}${endpoint}`, options);
+    const rawText = await response.clone().text();
+    console.log('Raw response:', rawText);
+    // Try to parse as JSON first, fall back to plain text
+    const contentType = response.headers.get("content-type") || "";
+    let data = null;
 
-    if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || "Something went wrong");
+    if (contentType.includes("application/json")) {
+        data = await response.json();
+    } else {
+        // Plain text response (e.g. Spring error strings)
+        const text = await response.text();
+        // Try parsing anyway in case content-type header is missing
+        try {
+            data = JSON.parse(text);
+        } catch {
+            data = { message: text };
+        }
     }
 
-    return response.json();
+    if (!response.ok) {
+        // Extract message from whatever shape the error came in
+        const message = (data && (data.message || data.error)) || "Something went wrong";
+        throw new Error(message);
+    }
+
+    return data;
 }
