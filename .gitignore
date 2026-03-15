@@ -1,0 +1,14 @@
+.env
+config.js
+
+backend/target/
+
+backend/resolveit/src/main/resources/application.properties
+backend/resolveit/src/main/resources/application-prod.properties
+
+.idea/
+*.iml
+.vscode/
+
+.DS_Store
+Thumbs.db

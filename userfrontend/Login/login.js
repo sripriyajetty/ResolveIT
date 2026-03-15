@@ -1,145 +1,143 @@
-// login.js – handles tab switching, form validation, done state, and navigation back to home
+// login.js – authentication logic for ResolveIT
 
-document.addEventListener('DOMContentLoaded', function () {
-  // --- DOM elements ---
-  const backBtn = document.getElementById('backToHomeBtn');
-  const tabLogin = document.getElementById('tabLogin');
-  const tabRegister = document.getElementById('tabRegister');
-  const nameField = document.getElementById('nameField');
-  const confirmField = document.getElementById('confirmField');
-  const formTitle = document.getElementById('formTitle');
-  const formSub = document.getElementById('formSub');
-  const submitBtn = document.getElementById('submitBtn');
-  const errorMsg = document.getElementById('errorMsg');
-  const authForm = document.getElementById('authForm');
-  const formState = document.getElementById('formState');
-  const doneState = document.getElementById('doneState');
-  const doneTitle = document.getElementById('doneTitle');
-  const goDashboard = document.getElementById('goDashboardBtn');
-  const forgotLink = document.getElementById('forgotLink');
+document.addEventListener("DOMContentLoaded", function () {
 
-  // inputs
-  const nameInput = document.getElementById('nameInput');
-  const emailInput = document.getElementById('emailInput');
-  const passwordInput = document.getElementById('passwordInput');
-  const confirmInput = document.getElementById('confirmInput');
-  // per-field error elements
-  const nameError = document.getElementById('nameError');
-  const emailError = document.getElementById('emailError');
-  const passwordError = document.getElementById('passwordError');
-  const confirmError = document.getElementById('confirmError');
+  const API_BASE = "http://localhost:8080/api";
 
-  // show password buttons
-  const showPasswordBtn = document.getElementById('showPasswordBtn');
-  const showConfirmPasswordBtn = document.getElementById('showConfirmPasswordBtn');
-  const passwordRequirements = document.getElementById('passwordRequirements');
+  // ---------------- API HELPER ----------------
+  async function apiCall(endpoint, method, body) {
 
-  // --- Helper to switch UI mode ---
-  function setMode(mode) {
-    if (mode === 'login') {
-      tabLogin.classList.add('active');
-      tabRegister.classList.remove('active');
-      nameField.classList.add('hidden');
-      confirmField.classList.add('hidden');
-      formTitle.innerText = 'Welcome back';
-      formSub.innerText = 'Sign in to access your reports';
-      submitBtn.innerText = 'Sign In';
-      // optional: clear confirm field
-      confirmInput.value = '';
-      passwordRequirements.classList.add('hidden');
-    } else {
-      tabRegister.classList.add('active');
-      tabLogin.classList.remove('active');
-      nameField.classList.remove('hidden');
-      confirmField.classList.remove('hidden');
-      formTitle.innerText = 'Create account';
-      formSub.innerText = 'Join ResolveIT to file your report';
-      submitBtn.innerText = 'Create Account';
-      passwordRequirements.classList.remove('hidden');
+    const response = await fetch(API_BASE + endpoint, {
+      method: method,
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify(body)
+    });
+
+    let data = null;
+
+    try {
+      data = await response.json();
+    } catch { }
+
+    if (!response.ok) {
+      throw new Error(data?.message || "Request failed");
     }
-    errorMsg.innerText = ''; // clear global errors
-    // clear per-field errors and invalid state
-    [nameError, emailError, passwordError, confirmError].forEach(el => { if (el) el.innerText = ''; });
-    [nameInput, emailInput, passwordInput, confirmInput].forEach(i => { if (i) i.classList.remove('invalid'); });
+
+    return data;
   }
 
-  // --- Tab click handlers ---
-  tabLogin.addEventListener('click', () => setMode('login'));
-  tabRegister.addEventListener('click', () => setMode('register'));
+  // ---------------- DOM ELEMENTS ----------------
 
-  // --- Show/Hide Password Toggles ---
-  showPasswordBtn.addEventListener('click', (e) => {
-    e.preventDefault();
-    const isPassword = passwordInput.type === 'password';
-    passwordInput.type = isPassword ? 'text' : 'password';
-    showPasswordBtn.innerText = isPassword ? '👁️‍🗨️' : '👁️';
-  });
+  const tabLogin = document.getElementById("tabLogin");
+  const tabRegister = document.getElementById("tabRegister");
 
-  showConfirmPasswordBtn.addEventListener('click', (e) => {
-    e.preventDefault();
-    const isPassword = confirmInput.type === 'password';
-    confirmInput.type = isPassword ? 'text' : 'password';
-    showConfirmPasswordBtn.innerText = isPassword ? '👁️‍🗨️' : '👁️';
-  });
+  const nameField = document.getElementById("nameField");
+  const confirmField = document.getElementById("confirmField");
 
-  // --- Back to home (home.html) ---
-  backBtn.addEventListener('click', () => {
-    window.location.href = '../Home/home.html';
-  });
+  const formTitle = document.getElementById("formTitle");
+  const formSub = document.getElementById("formSub");
+  const submitBtn = document.getElementById("submitBtn");
 
-  // --- Forgot password link (no-op) ---
-  forgotLink.addEventListener('click', (e) => {
-    e.preventDefault();
-  });
+  const errorMsg = document.getElementById("errorMsg");
 
-  authForm.addEventListener('submit', (e) => {
-    e.preventDefault();
+  const authForm = document.getElementById("authForm");
 
-    const isLogin = tabLogin.classList.contains('active');
-    const password = passwordInput.value.trim();
-    const confirm = confirmInput.value.trim();
-    const emailOk = validateEmailField();
-    const passwordOk = validatePasswordField();
-    const confirmOk = validateConfirmField();
-    const nameOk = isLogin ? true : validateNameField();
+  const nameInput = document.getElementById("nameInput");
+  const emailInput = document.getElementById("emailInput");
+  const passwordInput = document.getElementById("passwordInput");
+  const confirmInput = document.getElementById("confirmInput");
 
-    if (!emailOk || !passwordOk || !confirmOk || !nameOk) {
-      errorMsg.innerText = 'Please fix the highlighted errors.';
-      return;
+  const nameError = document.getElementById("nameError");
+  const emailError = document.getElementById("emailError");
+  const passwordError = document.getElementById("passwordError");
+  const confirmError = document.getElementById("confirmError");
+
+  const showPasswordBtn = document.getElementById("showPasswordBtn");
+  const showConfirmPasswordBtn = document.getElementById("showConfirmPasswordBtn");
+
+  const passwordRequirements = document.getElementById("passwordRequirements");
+
+  // ---------------- MODE SWITCH ----------------
+  const backToHomeBtn = document.getElementById('backToHomeBtn');
+  if (backToHomeBtn) {
+    backToHomeBtn.addEventListener('click', () => {
+      window.location.href = '../Home/home.html';
+    });
+  }
+
+  function setMode(mode) {
+
+    if (mode === "login") {
+
+      tabLogin.classList.add("active");
+      tabRegister.classList.remove("active");
+
+      nameField.classList.add("hidden");
+      confirmField.classList.add("hidden");
+
+      formTitle.innerText = "Welcome back";
+      formSub.innerText = "Sign in to access your dashboard";
+      submitBtn.innerText = "Sign In";
+
+      passwordRequirements.classList.add("hidden");
+
+    } else {
+
+      tabRegister.classList.add("active");
+      tabLogin.classList.remove("active");
+
+      nameField.classList.remove("hidden");
+      confirmField.classList.remove("hidden");
+
+      formTitle.innerText = "Create account";
+      formSub.innerText = "Join ResolveIT";
+
+      submitBtn.innerText = "Create Account";
+
+      passwordRequirements.classList.remove("hidden");
     }
-    errorMsg.innerText = '';
 
-    const originalText = submitBtn.innerText;
-    submitBtn.innerText = 'Please wait...';
-    submitBtn.disabled = true;
+    clearErrors();
+  }
 
-    setTimeout(() => {
-      window.location.href = '../Dashboard/dashboard.html';
-    }, 1000);
-  });
-  
-  goDashboard.addEventListener('click', () => {
-    window.location.href = '../Dashboard/dashboard.html';
-  });
+  tabLogin.addEventListener("click", () => setMode("login"));
+  tabRegister.addEventListener("click", () => setMode("register"));
 
-  function setFieldError(inputEl, errorEl, message) {
-    if (!errorEl || !inputEl) return;
+  // ---------------- ERROR HELPERS ----------------
+
+  function setFieldError(input, errorEl, message) {
+
+    if (!errorEl) return false;
+
     if (message) {
       errorEl.innerText = message;
-      inputEl.classList.add('invalid');
+      input.classList.add("invalid");
       return false;
     }
-    errorEl.innerText = '';
-    inputEl.classList.remove('invalid');
+
+    errorEl.innerText = "";
+    input.classList.remove("invalid");
     return true;
   }
 
+  function clearErrors() {
+
+    errorMsg.innerText = "";
+
+    [nameError, emailError, passwordError, confirmError].forEach(el => {
+      if (el) el.innerText = "";
+    });
+
+    [nameInput, emailInput, passwordInput, confirmInput].forEach(el => {
+      if (el) el.classList.remove("invalid");
+    });
+  }
+
+  // ---------------- PASSWORD CHECK ----------------
+
   function updatePasswordRequirements(password) {
-    const reqLength = document.getElementById('req-length');
-    const reqUpper = document.getElementById('req-upper');
-    const reqLower = document.getElementById('req-lower');
-    const reqDigit = document.getElementById('req-digit');
-    const reqSpecial = document.getElementById('req-special');
 
     const checks = {
       length: password.length >= 8,
@@ -149,72 +147,159 @@ document.addEventListener('DOMContentLoaded', function () {
       special: /[^A-Za-z0-9]/.test(password)
     };
 
-    reqLength.classList.toggle('valid', checks.length);
-    reqUpper.classList.toggle('valid', checks.upper);
-    reqLower.classList.toggle('valid', checks.lower);
-    reqDigit.classList.toggle('valid', checks.digit);
-    reqSpecial.classList.toggle('valid', checks.special);
-
-    return Object.values(checks).every(val => val);
+    return Object.values(checks).every(Boolean);
   }
 
-  function validateEmailField() {
+  // ---------------- VALIDATION ----------------
+
+  function validateEmail() {
+
     const v = emailInput.value.trim();
-    if (!v) return setFieldError(emailInput, emailError, 'Email is required.');
+
+    if (!v)
+      return setFieldError(emailInput, emailError, "Email required");
+
     const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!re.test(v)) return setFieldError(emailInput, emailError, 'Enter a valid email address.');
-    return setFieldError(emailInput, emailError, '');
+
+    if (!re.test(v))
+      return setFieldError(emailInput, emailError, "Invalid email");
+
+    return setFieldError(emailInput, emailError, "");
   }
 
-  function validatePasswordField() {
+  function validatePassword() {
+
     const v = passwordInput.value;
-    if (!v) return setFieldError(passwordInput, passwordError, 'Password is required.');
-    
-    // Update requirements display
-    updatePasswordRequirements(v);
-    
-    // Check all requirements
-    if (v.length < 8) return setFieldError(passwordInput, passwordError, 'Password must be at least 8 characters.');
-    if (!/[A-Z]/.test(v)) return setFieldError(passwordInput, passwordError, 'Include at least one uppercase letter.');
-    if (!/[a-z]/.test(v)) return setFieldError(passwordInput, passwordError, 'Include at least one lowercase letter.');
-    if (!/\d/.test(v)) return setFieldError(passwordInput, passwordError, 'Include at least one digit.');
-    if (!/[^A-Za-z0-9]/.test(v)) return setFieldError(passwordInput, passwordError, 'Include at least one special character.');
-    return setFieldError(passwordInput, passwordError, '');
+
+    if (!v)
+      return setFieldError(passwordInput, passwordError, "Password required");
+
+    if (!updatePasswordRequirements(v))
+      return setFieldError(passwordInput, passwordError, "Weak password");
+
+    return setFieldError(passwordInput, passwordError, "");
   }
 
-  function validateConfirmField() {
-    if (tabLogin.classList.contains('active')) {
-      // no confirm needed for login
-      setFieldError(confirmInput, confirmError, '');
+  function validateConfirm() {
+
+    if (tabLogin.classList.contains("active"))
       return true;
-    }
+
     const v = confirmInput.value;
-    if (!v) return setFieldError(confirmInput, confirmError, 'Please confirm your password.');
-    if (v !== passwordInput.value) return setFieldError(confirmInput, confirmError, 'Passwords do not match.');
-    return setFieldError(confirmInput, confirmError, '');
+
+    if (!v)
+      return setFieldError(confirmInput, confirmError, "Confirm password");
+
+    if (v !== passwordInput.value)
+      return setFieldError(confirmInput, confirmError, "Passwords mismatch");
+
+    return setFieldError(confirmInput, confirmError, "");
   }
 
-  function validateNameField() {
-    if (tabLogin.classList.contains('active')) {
-      setFieldError(nameInput, nameError, '');
+  function validateName() {
+
+    if (tabLogin.classList.contains("active"))
       return true;
-    }
+
     const v = nameInput.value.trim();
-    if (!v) return setFieldError(nameInput, nameError, 'Full name is required.');
-    if (v.length < 2) return setFieldError(nameInput, nameError, 'Please enter your full name.');
-    return setFieldError(nameInput, nameError, '');
+
+    if (!v)
+      return setFieldError(nameInput, nameError, "Name required");
+
+    if (v.length < 2)
+      return setFieldError(nameInput, nameError, "Enter full name");
+
+    return setFieldError(nameInput, nameError, "");
   }
 
-  emailInput.addEventListener('input', () => { validateEmailField(); errorMsg.innerText = ''; });
-  passwordInput.addEventListener('input', () => { 
-    validatePasswordField(); 
-    validateConfirmField(); 
-    errorMsg.innerText = ''; 
-  });
-  confirmInput.addEventListener('input', () => { validateConfirmField(); errorMsg.innerText = ''; });
-  nameInput.addEventListener('input', () => { validateNameField(); errorMsg.innerText = ''; });
-  setMode('login');
+  // ---------------- PASSWORD TOGGLE ----------------
 
-  // Prevent any stray form submissions from reloading
-  authForm.addEventListener('submit', (e) => e.preventDefault(), false);
+  showPasswordBtn.addEventListener("click", (e) => {
+
+    e.preventDefault();
+
+    passwordInput.type =
+      passwordInput.type === "password" ? "text" : "password";
+  });
+
+  showConfirmPasswordBtn.addEventListener("click", (e) => {
+
+    e.preventDefault();
+
+    confirmInput.type =
+      confirmInput.type === "password" ? "text" : "password";
+  });
+
+  // ---------------- FORM SUBMIT ----------------
+
+  authForm.addEventListener("submit", async (e) => {
+
+    e.preventDefault();
+
+    const isLogin = tabLogin.classList.contains("active");
+
+    const emailOk = validateEmail();
+    const passwordOk = validatePassword();
+    const confirmOk = validateConfirm();
+    const nameOk = validateName();
+
+    if (!emailOk || !passwordOk || !confirmOk || !nameOk) {
+      errorMsg.innerText = "Please fix the errors.";
+      return;
+    }
+
+    submitBtn.innerText = "Please wait...";
+    submitBtn.disabled = true;
+
+    try {
+
+      if (isLogin) {
+
+        // -------- LOGIN --------
+
+        const data = await apiCall("/auth/login", "POST", {
+          email: emailInput.value.trim(),
+          password: passwordInput.value
+        });
+
+        localStorage.setItem("token", data.token);
+        localStorage.setItem("userId", data.userId);
+        localStorage.setItem("userName", data.name);
+        localStorage.setItem("userRole", data.role);
+
+        window.location.href = "../Dashboard/dashboard.html";
+
+      } else {
+
+        // -------- REGISTER --------
+
+        await apiCall("/auth/register", "POST", {
+          name: nameInput.value.trim(),
+          email: emailInput.value.trim(),
+          password: passwordInput.value
+        });
+
+        alert("Account created. Please login.");
+
+        setMode("login");
+
+      }
+
+    } catch (err) {
+
+      errorMsg.innerText = err.message;
+
+      submitBtn.innerText = isLogin ? "Sign In" : "Create Account";
+      submitBtn.disabled = false;
+
+      passwordInput.value = "";
+      confirmInput.value = "";
+    }
+
+  });
+
+  // ---------------- INIT ----------------
+
+  setMode("login");
+
 });

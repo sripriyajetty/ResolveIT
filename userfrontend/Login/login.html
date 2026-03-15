@@ -1,13 +1,17 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>ResolveIT · Login / Register</title>
   <link rel="stylesheet" href="login.css">
   <!-- Google Fonts -->
-  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link
+    href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400&family=DM+Sans:wght@300;400;500;600&display=swap"
+    rel="stylesheet">
 </head>
+
 <body>
   <div class="login-container">
     <!-- LEFT PANEL (branding) -->
@@ -16,7 +20,9 @@
       <button class="back-btn" id="backToHomeBtn">← Back</button>
       <div class="left-content">
         <div class="left-logo">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+          </svg>
           <span>ResolveIT</span>
         </div>
         <h2>Your safety is our priority</h2>
@@ -26,13 +32,6 @@
 
     <!-- RIGHT PANEL (forms) -->
     <div class="right-panel">
-      <!-- DONE STATE (initially hidden) -->
-      <div class="done-state hidden" id="doneState">
-        <div class="done-emoji">✅</div>
-        <h2 id="doneTitle">Welcome back!</h2>
-        <p>You're now signed in to ResolveIT.</p>
-        <button class="btn-dark" id="goDashboardBtn">Go to Dashboard</button>
-      </div>
 
       <!-- LOGIN/REGISTER FORM (visible by default) -->
       <div class="form-state" id="formState">
@@ -62,7 +61,9 @@
           <div class="form-field">
             <div class="password-header">
               <label>Password</label>
-              <a href="#" id="forgotLink">Forgot password?</a>
+              <a href="#" id="forgotPasswordLink" style="font-size:13px;color:#4f46e5;text-decoration:none;">
+                Forgot password?
+              </a>
             </div>
             <div class="password-input-wrapper">
               <input type="password" name="password" required class="login-input" id="passwordInput">
@@ -86,7 +87,8 @@
             <label>Confirm Password</label>
             <div class="password-input-wrapper">
               <input type="password" name="confirm" class="login-input" id="confirmInput">
-              <button type="button" class="show-password-btn" id="showConfirmPasswordBtn" title="Show password">👁️</button>
+              <button type="button" class="show-password-btn" id="showConfirmPasswordBtn"
+                title="Show password">👁️</button>
             </div>
             <div class="field-error" id="confirmError"></div>
           </div>
@@ -100,7 +102,9 @@
       </div>
     </div>
   </div>
-
+  <script src="../config.js"></script>
+  <script src="../js/api.js"></script>
   <script src="login.js"></script>
 </body>
+
 </html>

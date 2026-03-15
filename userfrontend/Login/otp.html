@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Verify Email – ResolveIT</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #f5f5f5;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+    }
+    .card {
+      background: #fff;
+      border-radius: 16px;
+      padding: 40px 36px;
+      width: 100%;
+      max-width: 420px;
+      box-shadow: 0 8px 40px rgba(0,0,0,0.08);
+      text-align: center;
+    }
+    .icon { font-size: 48px; margin-bottom: 16px; }
+    h1 { font-size: 24px; color: #1a1a2e; margin-bottom: 8px; }
+    .subtitle { color: #666; font-size: 14px; margin-bottom: 32px; line-height: 1.5; }
+    .subtitle span { color: #4f46e5; font-weight: 600; }
+
+    .otp-inputs {
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+      margin-bottom: 8px;
+    }
+    .otp-inputs input {
+      width: 64px;
+      height: 64px;
+      text-align: center;
+      font-size: 28px;
+      font-weight: 700;
+      border: 2px solid #e5e7eb;
+      border-radius: 12px;
+      outline: none;
+      transition: border-color 0.2s;
+      color: #1a1a2e;
+    }
+    .otp-inputs input:focus { border-color: #4f46e5; }
+    .otp-inputs input.error { border-color: #ef4444; }
+
+    .error-msg {
+      color: #ef4444;
+      font-size: 13px;
+      min-height: 20px;
+      margin-bottom: 20px;
+    }
+
+    .btn {
+      width: 100%;
+      padding: 14px;
+      background: #4f46e5;
+      color: #fff;
+      border: none;
+      border-radius: 10px;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity 0.2s;
+    }
+    .btn:disabled { opacity: 0.6; cursor: not-allowed; }
+
+    .resend-row {
+      margin-top: 20px;
+      font-size: 13px;
+      color: #666;
+    }
+    .resend-row a {
+      color: #4f46e5;
+      font-weight: 600;
+      text-decoration: none;
+      cursor: pointer;
+    }
+    .resend-row a.disabled {
+      color: #aaa;
+      pointer-events: none;
+    }
+    .timer { font-weight: 600; color: #4f46e5; }
+
+    .back-link {
+      display: inline-block;
+      margin-top: 16px;
+      font-size: 13px;
+      color: #999;
+      text-decoration: none;
+    }
+    .back-link:hover { color: #4f46e5; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="icon">📧</div>
+    <h1>Check your email</h1>
+    <p class="subtitle">
+      We sent a 4-digit code to<br>
+      <span id="emailDisplay"></span>
+    </p>
+
+    <div class="otp-inputs">
+      <input type="text" maxlength="1" inputmode="numeric" id="d1" />
+      <input type="text" maxlength="1" inputmode="numeric" id="d2" />
+      <input type="text" maxlength="1" inputmode="numeric" id="d3" />
+      <input type="text" maxlength="1" inputmode="numeric" id="d4" />
+    </div>
+
+    <p class="error-msg" id="otpError"></p>
+
+    <button class="btn" id="verifyBtn">Verify & Create Account</button>
+
+    <div class="resend-row">
+      Didn't get it?
+      <a id="resendLink" class="disabled">Resend code (<span class="timer" id="timerDisplay">30s</span>)</a>
+    </div>
+
+    <a class="back-link" href="../Login/login.html">← Back to login</a>
+  </div>
+
+  <script>
+    const RESEND_API_KEY = "re_YOUR_API_KEY"; // 🔴 Same key as login.js
+    const FROM_EMAIL     = "noreply@yourdomain.com"; // 🔴 Same sender
+    const API_BASE       = "http://localhost:8080/api";
+
+    const pendingUser = JSON.parse(sessionStorage.getItem("pendingUser") || "null");
+    const storedOtp   = sessionStorage.getItem("registerOtp");
+    const otpExpiry   = parseInt(sessionStorage.getItem("otpExpiry") || "0");
+
+    // Guard: redirect if no pending registration
+    if (!pendingUser || !storedOtp) {
+      window.location.href = "../Login/login.html";
+    }
+
+    document.getElementById("emailDisplay").innerText = pendingUser?.email || "";
+
+    // ---------------- OTP INPUT BEHAVIOUR ----------------
+    const digits = ["d1","d2","d3","d4"].map(id => document.getElementById(id));
+
+    digits.forEach((input, i) => {
+      input.addEventListener("input", () => {
+        input.value = input.value.replace(/\D/g, "");
+        if (input.value && i < digits.length - 1) digits[i + 1].focus();
+      });
+      input.addEventListener("keydown", (e) => {
+        if (e.key === "Backspace" && !input.value && i > 0) digits[i - 1].focus();
+      });
+      input.addEventListener("paste", (e) => {
+        e.preventDefault();
+        const pasted = e.clipboardData.getData("text").replace(/\D/g, "").slice(0, 4);
+        pasted.split("").forEach((ch, j) => { if (digits[j]) digits[j].value = ch; });
+        const last = Math.min(pasted.length, digits.length - 1);
+        digits[last].focus();
+      });
+    });
+
+    function getEnteredOtp() {
+      return digits.map(d => d.value).join("");
+    }
+
+    // ---------------- RESEND COUNTDOWN ----------------
+    let countdown = 30;
+    const timerEl   = document.getElementById("timerDisplay");
+    const resendLink = document.getElementById("resendLink");
+
+    const timer = setInterval(() => {
+      countdown--;
+      timerEl.innerText = `${countdown}s`;
+      if (countdown <= 0) {
+        clearInterval(timer);
+        resendLink.classList.remove("disabled");
+        resendLink.innerHTML = "Resend code";
+      }
+    }, 1000);
+
+    resendLink.addEventListener("click", async (e) => {
+      e.preventDefault();
+      if (resendLink.classList.contains("disabled")) return;
+
+      const newOtp = (Math.floor(1000 + Math.random() * 9000)).toString();
+      const newExpiry = Date.now() + 10 * 60 * 1000;
+      sessionStorage.setItem("registerOtp", newOtp);
+      sessionStorage.setItem("otpExpiry", newExpiry);
+
+      resendLink.classList.add("disabled");
+      resendLink.innerText = "Sending...";
+
+      try {
+        await sendOTPEmail(pendingUser.email, newOtp);
+        countdown = 30;
+        timerEl.innerText = `${countdown}s`;
+        resendLink.innerHTML = `Resend code (<span class="timer" id="timerDisplay">${countdown}s</span>)`;
+
+        const newTimer = setInterval(() => {
+          countdown--;
+          const t = document.getElementById("timerDisplay");
+          if (t) t.innerText = `${countdown}s`;
+          if (countdown <= 0) {
+            clearInterval(newTimer);
+            resendLink.classList.remove("disabled");
+            resendLink.innerHTML = "Resend code";
+          }
+        }, 1000);
+
+        document.getElementById("otpError").innerText = "";
+      } catch {
+        resendLink.classList.remove("disabled");
+        resendLink.innerHTML = "Resend code";
+        document.getElementById("otpError").innerText = "Failed to resend. Try again.";
+      }
+    });
+
+    // ---------------- SEND EMAIL HELPER ----------------
+    async function sendOTPEmail(toEmail, otp) {
+      const res = await fetch("https://api.resend.com/emails", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${RESEND_API_KEY}`
+        },
+        body: JSON.stringify({
+          from: FROM_EMAIL,
+          to: toEmail,
+          subject: "Your ResolveIT Verification Code",
+          html: `
+            <div style="font-family:sans-serif;max-width:480px;margin:auto;padding:32px;border:1px solid #e5e7eb;border-radius:12px">
+              <h2 style="color:#1a1a2e">ResolveIT</h2>
+              <p style="color:#555">Your verification code (expires in 10 minutes):</p>
+              <div style="font-size:40px;font-weight:700;letter-spacing:12px;text-align:center;padding:24px 0;color:#4f46e5">${otp}</div>
+              <p style="color:#999;font-size:12px">If you didn't request this, ignore this email.</p>
+            </div>`
+        })
+      });
+      if (!res.ok) throw new Error("Email send failed");
+    }
+
+    // ---------------- VERIFY & REGISTER ----------------
+    document.getElementById("verifyBtn").addEventListener("click", async () => {
+      const entered   = getEnteredOtp();
+      const errorEl   = document.getElementById("otpError");
+      const btn       = document.getElementById("verifyBtn");
+      const currentOtp    = sessionStorage.getItem("registerOtp");
+      const currentExpiry = parseInt(sessionStorage.getItem("otpExpiry") || "0");
+
+      errorEl.innerText = "";
+      digits.forEach(d => d.classList.remove("error"));
+
+      if (entered.length < 4) {
+        errorEl.innerText = "Please enter all 4 digits";
+        digits.forEach(d => d.classList.add("error"));
+        return;
+      }
+      if (Date.now() > currentExpiry) {
+        errorEl.innerText = "Code expired. Please request a new one.";
+        return;
+      }
+      if (entered !== currentOtp) {
+        errorEl.innerText = "Incorrect code. Please try again.";
+        digits.forEach(d => { d.classList.add("error"); d.value = ""; });
+        digits[0].focus();
+        return;
+      }
+
+      // OTP correct — register user
+      btn.disabled = true;
+      btn.innerText = "Creating account...";
+
+      try {
+        await fetch(`${API_BASE}/auth/register`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(pendingUser)
+        }).then(async res => {
+          if (!res.ok) {
+            const err = await res.json();
+            throw new Error(err.message || "Registration failed");
+          }
+        });
+
+        // Clean up
+        sessionStorage.removeItem("pendingUser");
+        sessionStorage.removeItem("registerOtp");
+        sessionStorage.removeItem("otpExpiry");
+
+        alert("Account created successfully! Please sign in.");
+        window.location.href = "../Login/login.html";
+
+      } catch (err) {
+        errorEl.innerText = err.message;
+        btn.disabled = false;
+        btn.innerText = "Verify & Create Account";
+      }
+    });
+  </script>
+</body>
+</html>

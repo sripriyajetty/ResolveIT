@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Track Complaints – ResolveIT</title>
+  <link rel="stylesheet" href="track.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
+</head>
+<body>
+
+  <div class="track-wrapper">
+
+    <div class="track-header">
+      <button class="back-btn" id="backBtn">
+        <i class="fas fa-arrow-left"></i> Back to Dashboard
+      </button>
+      <div>
+        <h1>My Complaints</h1>
+        <p>View the full history and status of all your submitted complaints.</p>
+      </div>
+    </div>
+
+    <!-- Search -->
+    <div class="search-bar">
+      <div class="search-box">
+        <i class="fas fa-search search-icon"></i>
+        <input type="text" id="searchInput" placeholder="Search by ID or title..." />
+        <button id="clearBtn" class="clear-btn hidden">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+    </div>
+
+    <!-- Content -->
+    <div class="track-body">
+
+      <!-- Left: Cards list -->
+      <div class="cards-panel" id="cardsPanel">
+        <div class="loading-spinner">
+          <i class="fas fa-circle-notch fa-spin"></i> Loading complaints...
+        </div>
+      </div>
+
+      <!-- Right: Detail panel -->
+      <div class="detail-panel hidden" id="detailPanel">
+        <div class="detail-placeholder">
+          <i class="fas fa-hand-pointer"></i>
+          <p>Select a complaint to view details</p>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <script src="track.js"></script>
+</body>
+</html>
